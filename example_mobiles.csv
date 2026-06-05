@@ -1,0 +1,9 @@
+brand,model,price,ram,storage,battery,display,camera,processor
+Samsung,Galaxy S24 Ultra,1299,12GB,256GB,5000mAh,6.8 inch AMOLED,200MP+50MP+12MP+10MP,Snapdragon 8 Gen 3
+Apple,iPhone 15 Pro Max,1199,8GB,256GB,4422mAh,6.7 inch OLED,48MP+12MP+12MP,A17 Pro
+Google,Pixel 8 Pro,999,12GB,128GB,5050mAh,6.7 inch OLED,50MP+48MP+48MP,Google Tensor G3
+OnePlus,12,799,12GB,256GB,5400mAh,6.82 inch AMOLED,50MP+64MP+48MP,Snapdragon 8 Gen 3
+Samsung,Galaxy A54 5G,449,6GB,128GB,5000mAh,6.4 inch Super AMOLED,50MP+12MP+5MP,Exynos 1380
+Motorola,Moto G Power 2024,299,8GB,128GB,5000mAh,6.7 inch LCD,50MP+8MP,Dimensity 7020
+Nothing,Phone (2a),349,8GB,128GB,5000mAh,6.7 inch AMOLED,50MP+50MP,Dimensity 7200 Pro
+Apple,iPhone 13,599,4GB,128GB,3240mAh,6.1 inch OLED,12MP+12MP,A15 Bionic
