@@ -19,6 +19,13 @@ if (image) {
   try {
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+    const matches = image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      return res.status(400).json({ error: "Invalid image format" });
+    }
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+
     const prompt = `You are MobileAssist AI, an expert mobile phone analyst based in India.
 All prices should be in Indian Rupees (INR ₹).
 Analyze this phone image and provide:
@@ -38,7 +45,12 @@ Respond naturally in a chat-like format.`;
           role: "user",
           content: [
             { type: "text", text: prompt },
-            { type: "image_url", image_url: { url: image } }
+            { 
+              type: "image_url", 
+              image_url: { 
+                url: `data:${mimeType};base64,${base64Data}` 
+              } 
+            }
           ]
         }
       ],
