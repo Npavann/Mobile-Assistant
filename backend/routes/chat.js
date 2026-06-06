@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Mobile = require('../models/Mobile');
-const { GoogleGenAI } = require('@google/genai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 router.post('/', async (req, res) => {
 try {
@@ -17,7 +17,9 @@ const lowerMessage = (message || "").toLowerCase();
 // ---------------------------
 if (image) {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
     const matches = image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
     if (!matches || matches.length !== 3) {
       return res.status(400).json({ error: "Invalid image format" });
@@ -29,40 +31,23 @@ if (image) {
     const prompt = `
 You are MobileAssist AI, an expert mobile phone analyst based in India.
 All prices should be in Indian Rupees (INR ₹).
-The user has uploaded an image of a mobile phone. Please analyze it and provide a detailed response.
-
-Analyze the following:
-1. Detect mobile brand (if possible)
-2. Detect model (if possible)
-3. Detect color/design
-4. Detect camera setup
-5. Detect display type/notch
-6. Detect condition/damage if visible
-7. Describe phone appearance
-8. Give estimated category (budget/midrange/flagship)
-9. Give possible specifications if recognizable
-10. Give estimated price in Indian Rupees (INR ₹)
-
-User Question:
-${message || "Please analyze this phone image."}
-
+Analyze this phone image and provide:
+1. Mobile brand and model (if visible)
+2. Color and design
+3. Camera setup
+4. Display type
+5. Estimated category (budget/midrange/flagship)
+6. Estimated price in INR ₹
+User Question: ${message || "Please analyze this phone image."}
 Respond naturally in a chat-like format.
 `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: prompt },
-            { inlineData: { data: base64Data, mimeType: mimeType } }
-          ]
-        }
-      ]
-    });
+    const result = await model.generateContent([
+      prompt,
+      { inlineData: { data: base64Data, mimeType: mimeType } }
+    ]);
 
-    const reply = response?.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+    const reply = result.response.text();
     return res.json({ type: "ai_vision", reply });
 
   } catch (aiError) {
@@ -131,9 +116,9 @@ reply: phoneText
 // GEMINI AI (Multilingual)
 // ---------------------------
 try {
-const ai = new GoogleGenAI({
-apiKey: process.env.GEMINI_API_KEY
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
 const prompt = `
 You are MobileAssist AI, a smart mobile phone assistant based in India.
 Important Rules:
@@ -143,20 +128,14 @@ Important Rules:
 - Compare phones with Indian market prices
 - Detect the user's language and reply in the same language
 
-User Question:
-${message}
+User Question: ${message}
 `;
-const response = await ai.models.generateContent({
-model: "gemini-2.0-flash",
-contents: prompt
-});
-const reply =
-response?.candidates?.[0]?.content?.parts?.[0]?.text ||
-"No response generated.";
-return res.json({
-type: "ai",
-reply
-});
+
+const result = await model.generateContent(prompt);
+const reply = result.response.text();
+
+return res.json({ type: "ai", reply });
+
 } catch (aiError) {
 console.error("Gemini Error:", aiError);
 return res.json({
@@ -166,9 +145,7 @@ reply: "⚠ AI service temporarily unavailable. Please try again later."
 }
 } catch (error) {
 console.error("Chat Error:", error);
-res.status(500).json({
-error: "Server error"
-});
+res.status(500).json({ error: "Server error" });
 }
 });
 
