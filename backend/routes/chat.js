@@ -50,7 +50,7 @@ Respond naturally in a chat-like format.
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash-latest",
+      model: "gemini-2.0-flash",
       contents: [
         {
           role: "user",
