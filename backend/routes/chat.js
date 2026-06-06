@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Mobile = require('../models/Mobile');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleGenAI } = require('@google/genai');
 
 router.post('/', async (req, res) => {
 try {
@@ -17,8 +17,7 @@ const lowerMessage = (message || "").toLowerCase();
 // ---------------------------
 if (image) {
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     const matches = image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
     if (!matches || matches.length !== 3) {
@@ -42,12 +41,20 @@ User Question: ${message || "Please analyze this phone image."}
 Respond naturally in a chat-like format.
 `;
 
-    const result = await model.generateContent([
-      prompt,
-      { inlineData: { data: base64Data, mimeType: mimeType } }
-    ]);
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash-lite",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: prompt },
+            { inlineData: { data: base64Data, mimeType: mimeType } }
+          ]
+        }
+      ]
+    });
 
-    const reply = result.response.text();
+    const reply = response?.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
     return res.json({ type: "ai_vision", reply });
 
   } catch (aiError) {
@@ -116,8 +123,7 @@ reply: phoneText
 // GEMINI AI (Multilingual)
 // ---------------------------
 try {
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const prompt = `
 You are MobileAssist AI, a smart mobile phone assistant based in India.
@@ -131,9 +137,12 @@ Important Rules:
 User Question: ${message}
 `;
 
-const result = await model.generateContent(prompt);
-const reply = result.response.text();
+const response = await ai.models.generateContent({
+  model: "gemini-2.0-flash-lite",
+  contents: prompt
+});
 
+const reply = response?.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
 return res.json({ type: "ai", reply });
 
 } catch (aiError) {
