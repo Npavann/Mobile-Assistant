@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Mobile = require('../models/Mobile');
-const { GoogleGenAI } = require('@google/genai');
+const Groq = require('groq-sdk');
 
 router.post('/', async (req, res) => {
 try {
@@ -17,18 +17,9 @@ const lowerMessage = (message || "").toLowerCase();
 // ---------------------------
 if (image) {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    const matches = image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-    if (!matches || matches.length !== 3) {
-      return res.status(400).json({ error: "Invalid image format" });
-    }
-    
-    const mimeType = matches[1];
-    const base64Data = matches[2];
-
-    const prompt = `
-You are MobileAssist AI, an expert mobile phone analyst based in India.
+    const prompt = `You are MobileAssist AI, an expert mobile phone analyst based in India.
 All prices should be in Indian Rupees (INR ₹).
 Analyze this phone image and provide:
 1. Mobile brand and model (if visible)
@@ -38,27 +29,27 @@ Analyze this phone image and provide:
 5. Estimated category (budget/midrange/flagship)
 6. Estimated price in INR ₹
 User Question: ${message || "Please analyze this phone image."}
-Respond naturally in a chat-like format.
-`;
+Respond naturally in a chat-like format.`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-lite",
-      contents: [
+    const response = await groq.chat.completions.create({
+      model: "llama-3.2-11b-vision-preview",
+      messages: [
         {
           role: "user",
-          parts: [
-            { text: prompt },
-            { inlineData: { data: base64Data, mimeType: mimeType } }
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: image } }
           ]
         }
-      ]
+      ],
+      max_tokens: 1024
     });
 
-    const reply = response?.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+    const reply = response.choices[0]?.message?.content || "No response generated.";
     return res.json({ type: "ai_vision", reply });
 
   } catch (aiError) {
-    console.error("Gemini Vision Error:", aiError);
+    console.error("Groq Vision Error:", aiError);
     return res.json({ type: "ai", reply: "⚠ AI Vision service temporarily unavailable. Please try again later." });
   }
 }
@@ -120,33 +111,37 @@ reply: phoneText
 }
 
 // ---------------------------
-// GEMINI AI (Multilingual)
+// GROQ AI (Multilingual)
 // ---------------------------
 try {
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const prompt = `
-You are MobileAssist AI, a smart mobile phone assistant based in India.
+const response = await groq.chat.completions.create({
+  model: "llama-3.3-70b-versatile",
+  messages: [
+    {
+      role: "system",
+      content: `You are MobileAssist AI, a smart mobile phone assistant based in India.
 Important Rules:
 - Always use Indian Rupees (INR ₹) for all prices
 - When user says a number like "20000", assume it is ₹20000 INR
 - Suggest phones available in India
 - Compare phones with Indian market prices
-- Detect the user's language and reply in the same language
-
-User Question: ${message}
-`;
-
-const response = await ai.models.generateContent({
-  model: "gemini-2.0-flash-lite",
-  contents: prompt
+- Detect the user's language and reply in the same language`
+    },
+    {
+      role: "user",
+      content: message
+    }
+  ],
+  max_tokens: 1024
 });
 
-const reply = response?.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+const reply = response.choices[0]?.message?.content || "No response generated.";
 return res.json({ type: "ai", reply });
 
 } catch (aiError) {
-console.error("Gemini Error:", aiError);
+console.error("Groq Error:", aiError);
 return res.json({
 type: "ai",
 reply: "⚠ AI service temporarily unavailable. Please try again later."
