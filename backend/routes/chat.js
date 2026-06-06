@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Mobile = require('../models/Mobile');
 const { GoogleGenAI } = require('@google/genai');
+
 router.post('/', async (req, res) => {
 try {
 const { message, image } = req.body;
@@ -26,8 +27,9 @@ if (image) {
     const base64Data = matches[2];
 
     const prompt = `
-You are MobileAssist AI, an expert mobile phone analyst.
-The user has uploaded an image of a mobile phone. Please analyze it and provide a detailed response like ChatGPT Vision.
+You are MobileAssist AI, an expert mobile phone analyst based in India.
+All prices should be in Indian Rupees (INR ₹).
+The user has uploaded an image of a mobile phone. Please analyze it and provide a detailed response.
 
 Analyze the following:
 1. Detect mobile brand (if possible)
@@ -39,6 +41,7 @@ Analyze the following:
 7. Describe phone appearance
 8. Give estimated category (budget/midrange/flagship)
 9. Give possible specifications if recognizable
+10. Give estimated price in Indian Rupees (INR ₹)
 
 User Question:
 ${message || "Please analyze this phone image."}
@@ -47,7 +50,7 @@ Respond naturally in a chat-like format.
 `;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       contents: [
         {
           role: "user",
@@ -70,13 +73,13 @@ Respond naturally in a chat-like format.
 
 // Get all phones from DB
 const phones = await Mobile.find();
+
 // ---------------------------
 // ⚖ PHONE COMPARISON LOGIC
 // ---------------------------
 const matchedPhones = phones.filter(phone =>
 lowerMessage.includes(phone.model_name.toLowerCase())
 );
-// Remove duplicate phones
 const uniquePhones = [
 ...new Map(matchedPhones.map(phone => [phone.model_name, phone])).values()
 ];
@@ -98,6 +101,7 @@ phones: uniquePhones,
 reply: `⚖ Phone Comparison\n${comparisonText}`
 });
 }
+
 // ---------------------------
 // SINGLE PHONE SEARCH
 // ---------------------------
@@ -122,6 +126,7 @@ phone: phone,
 reply: phoneText
 });
 }
+
 // ---------------------------
 // GEMINI AI (Multilingual)
 // ---------------------------
@@ -130,19 +135,19 @@ const ai = new GoogleGenAI({
 apiKey: process.env.GEMINI_API_KEY
 });
 const prompt = `
-You are MobileAssist AI, a smart mobile phone assistant.
-Capabilities:
-- Suggest phones based on budget
-- Compare phones
-- Answer phone specifications
-- Understand multiple languages
-Rule:
-Detect the user's language and reply in the same language.
+You are MobileAssist AI, a smart mobile phone assistant based in India.
+Important Rules:
+- Always use Indian Rupees (INR ₹) for all prices
+- When user says a number like "20000", assume it is ₹20000 INR
+- Suggest phones available in India
+- Compare phones with Indian market prices
+- Detect the user's language and reply in the same language
+
 User Question:
 ${message}
 `;
 const response = await ai.models.generateContent({
-model: "gemini-2.5-flash",
+model: "gemini-1.5-flash",
 contents: prompt
 });
 const reply =
@@ -166,4 +171,5 @@ error: "Server error"
 });
 }
 });
+
 module.exports = router;
