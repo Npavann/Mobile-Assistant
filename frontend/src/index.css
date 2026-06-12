@@ -605,7 +605,22 @@ body {
     }
 
     .chat-input {
-        padding: 1rem;
+        padding: 10px !important;
+        gap: 6px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .chat-input input {
+        flex: 1;
+        min-width: 0;
+        font-size: 16px;
+    }
+
+    .chat-input button {
+        min-width: 48px;
+        min-height: 48px;
+        flex-shrink: 0;
     }
 
     .message {

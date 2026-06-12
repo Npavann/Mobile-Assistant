@@ -335,44 +335,93 @@ export default function Chat() {
                     <div ref={messagesEndRef} />
                 </div>
 
-                <form onSubmit={handleSubmit} className="chat-input" style={{ display: "flex", gap: "0.5rem", padding: "1.5rem", borderTop: "1px solid var(--border)", background: "rgba(15, 23, 42, 0.4)", alignItems: "flex-end" }}>
-                    <ImageUpload 
-                        selectedImage={selectedImage}
-                        onImageSelect={setSelectedImage}
-                        onImageRemove={() => setSelectedImage(null)}
-                    />
-                    
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder="Ask about phones..."
-                        disabled={isLoading}
-                        style={{ flex: 1 }}
-                    />
-                    <button
-                        type="button"
-                        onClick={startRecording}
-                        className="btn"
-                        style={{ background: isRecording ? "#ef4444" : "rgba(16, 185, 129, 0.2)", color: isRecording ? "white" : "#34d399", border: `1px solid ${isRecording ? "transparent" : "rgba(16, 185, 129, 0.3)"}` }}
-                    >
-                        <Mic size={20} />
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={(!input.trim() && !selectedImage) || isLoading}
-                        className="btn"
-                    >
-                        <Send size={20} />
-                        <span style={{ marginLeft: "0.25rem" }}>Send</span>
-                    </button>
-                </form>
+                <form
+  onSubmit={handleSubmit}
+  className="chat-input"
+  style={{
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "12px",
+    borderTop: "1px solid var(--border)",
+    background: "rgba(15,23,42,0.4)",
+    position: "sticky",
+    bottom: 0,
+    width: "100%",
+  }}
+>
+  {/* Image Upload */}
+  <ImageUpload
+    selectedImage={selectedImage}
+    onImageSelect={setSelectedImage}
+    onImageRemove={() => setSelectedImage(null)}
+  />
 
-                <FavoritesModal 
-                    isOpen={isFavoritesOpen} 
-                    onClose={() => setIsFavoritesOpen(false)} 
-                />
-            </div>
-        </div>
-    );
+  {/* Mic Button */}
+  <button
+    type="button"
+    onClick={startRecording}
+    style={{
+      width: "48px",
+      height: "48px",
+      borderRadius: "12px",
+      border: "none",
+      background: isRecording ? "#ef4444" : "#10b981",
+      color: "#fff",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+    }}
+  >
+    <Mic size={20} />
+  </button>
+
+  {/* Input */}
+  <input
+    type="text"
+    value={input}
+    onChange={(e) => setInput(e.target.value)}
+    placeholder="Ask about phones..."
+    disabled={isLoading}
+    style={{
+      flex: 1,
+      minWidth: 0,
+      height: "48px",
+      borderRadius: "12px",
+      padding: "0 14px",
+      background: "#1e293b",
+      color: "#fff",
+      border: "1px solid #334155",
+    }}
+  />
+
+  {/* Send Button */}
+  <button
+    type="submit"
+    disabled={(!input.trim() && !selectedImage) || isLoading}
+    style={{
+      width: "48px",
+      height: "48px",
+      borderRadius: "12px",
+      border: "none",
+      background: "#6366f1",
+      color: "#fff",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      flexShrink: 0,
+      cursor: "pointer",
+    }}
+  >
+    <Send size={20} />
+  </button>
+</form>
+ <FavoritesModal 
+ isOpen={isFavoritesOpen} 
+ onClose={() => setIsFavoritesOpen(false)} 
+ />
+  </div>
+  </div>
+  );
 }
