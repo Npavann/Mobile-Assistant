@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bot, User, Star } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 export default function ChatMessage({ msg, saveFavorite }) {
     return (
@@ -20,7 +21,24 @@ export default function ChatMessage({ msg, saveFavorite }) {
                 )}
                 
                 {msg.content && (
-                    <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{msg.content}</div>
+                    <div style={{ lineHeight: 1.6 }}>
+                        <ReactMarkdown
+                            components={{
+                                p: ({ children }) => <p style={{ margin: "0.4rem 0" }}>{children}</p>,
+                                strong: ({ children }) => <strong style={{ color: "#a5b4fc", fontWeight: 700 }}>{children}</strong>,
+                                ul: ({ children }) => <ul style={{ paddingLeft: "1.2rem", margin: "0.4rem 0" }}>{children}</ul>,
+                                ol: ({ children }) => <ol style={{ paddingLeft: "1.2rem", margin: "0.4rem 0" }}>{children}</ol>,
+                                li: ({ children }) => <li style={{ margin: "0.2rem 0" }}>{children}</li>,
+                                h1: ({ children }) => <h1 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#a5b4fc", margin: "0.5rem 0" }}>{children}</h1>,
+                                h2: ({ children }) => <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a5b4fc", margin: "0.5rem 0" }}>{children}</h2>,
+                                h3: ({ children }) => <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#a5b4fc", margin: "0.4rem 0" }}>{children}</h3>,
+                                code: ({ children }) => <code style={{ background: "rgba(0,0,0,0.3)", padding: "0.1rem 0.4rem", borderRadius: "4px", fontSize: "0.9em" }}>{children}</code>,
+                                hr: () => <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.1)", margin: "0.5rem 0" }} />,
+                            }}
+                        >
+                            {msg.content}
+                        </ReactMarkdown>
+                    </div>
                 )}
 
                 {/* Single Phone Result */}
