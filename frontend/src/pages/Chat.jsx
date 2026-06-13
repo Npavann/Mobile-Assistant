@@ -202,7 +202,6 @@ export default function Chat() {
     return (
         <div style={{ display: "flex", height: "100vh", background: "#0f0f0f", color: "white", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
 
-            {/* Sidebar */}
             <Sidebar
                 chatHistory={chatHistory}
                 currentChatId={currentChatId}
@@ -215,23 +214,69 @@ export default function Chat() {
                 setIsOpen={setIsSidebarOpen}
             />
 
-            {/* Overlay for mobile */}
             {isSidebarOpen && (
                 <div onClick={() => setIsSidebarOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 40 }} />
             )}
 
-            {/* Main Area */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", position: "relative" }}
                 onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
 
-                {/* Top Bar */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                    <button onClick={() => setIsSidebarOpen(true)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", padding: "0.4rem", borderRadius: "8px" }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                {/* Professional Top Bar */}
+                <div style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "0.75rem 1.25rem",
+                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                    background: "rgba(10,10,10,0.95)",
+                    backdropFilter: "blur(20px)",
+                    position: "sticky", top: 0, zIndex: 10
+                }}>
+                    {/* Menu Button */}
+                    <button onClick={() => setIsSidebarOpen(true)} style={{
+                        background: "rgba(255,255,255,0.06)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        color: "rgba(255,255,255,0.6)", cursor: "pointer",
+                        padding: "0.5rem", borderRadius: "10px", display: "flex",
+                        transition: "all 0.2s"
+                    }}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <line x1="3" y1="12" x2="21" y2="12"/>
+                            <line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
                     </button>
-                    <span style={{ fontWeight: 600, fontSize: "1rem", color: "rgba(255,255,255,0.9)" }}>MobileAssist AI</span>
-                    <button onClick={() => setIsFavoritesOpen(true)} style={{ background: "none", border: "none", color: "#fbbf24", cursor: "pointer", padding: "0.4rem" }}>
-                        <Star size={20} />
+
+                    {/* Center Logo */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                        <div style={{
+                            width: "34px", height: "34px",
+                            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                            borderRadius: "10px",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            boxShadow: "0 4px 15px rgba(99,102,241,0.4)"
+                        }}>
+                            <Smartphone size={18} color="white" />
+                        </div>
+                        <div>
+                            <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "white", lineHeight: 1.2 }}>MobileAssist AI</div>
+                            <div style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.3)", lineHeight: 1 }}>Your phone expert</div>
+                        </div>
+                    </div>
+
+                    {/* Favorites Button */}
+                    <button onClick={() => setIsFavoritesOpen(true)} style={{
+                        background: "rgba(251,191,36,0.08)",
+                        border: "1px solid rgba(251,191,36,0.15)",
+                        color: "#fbbf24", cursor: "pointer",
+                        padding: "0.5rem", borderRadius: "10px", display: "flex",
+                        transition: "all 0.2s"
+                    }}
+                        onMouseEnter={e => e.currentTarget.style.background = "rgba(251,191,36,0.15)"}
+                        onMouseLeave={e => e.currentTarget.style.background = "rgba(251,191,36,0.08)"}
+                    >
+                        <Star size={18} />
                     </button>
                 </div>
 
@@ -239,23 +284,40 @@ export default function Chat() {
                 <div style={{ flex: 1, overflowY: "auto", padding: "1rem" }}>
                     {isNewChat ? (
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: "2rem 1rem" }}>
-                            {/* Logo */}
-                            <div style={{ width: "64px", height: "64px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1.5rem", boxShadow: "0 8px 32px rgba(99,102,241,0.3)" }}>
-                                <Smartphone size={32} color="white" />
+                            {/* Big Logo */}
+                            <div style={{
+                                width: "80px", height: "80px",
+                                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                                borderRadius: "24px",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                marginBottom: "1.25rem",
+                                boxShadow: "0 12px 40px rgba(99,102,241,0.35)"
+                            }}>
+                                <Smartphone size={40} color="white" />
                             </div>
-                            <h1 style={{ fontSize: "1.75rem", fontWeight: 700, margin: "0 0 0.5rem", textAlign: "center" }}>MobileAssist AI</h1>
-                            <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "2rem", fontSize: "0.95rem" }}>Your smart mobile phone assistant</p>
+                            <h1 style={{ fontSize: "1.75rem", fontWeight: 800, margin: "0 0 0.4rem", textAlign: "center", background: "linear-gradient(135deg, #fff, rgba(255,255,255,0.6))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                                MobileAssist AI
+                            </h1>
+                            <p style={{ color: "rgba(255,255,255,0.35)", textAlign: "center", marginBottom: "2rem", fontSize: "0.9rem" }}>
+                                Your smart mobile phone expert
+                            </p>
 
                             {/* Suggestion Cards */}
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", width: "100%", maxWidth: "480px" }}>
                                 {SUGGESTIONS.map((s, i) => (
                                     <button key={i} onClick={() => { setInput(s.text); inputRef.current?.focus(); }}
-                                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "1rem", cursor: "pointer", textAlign: "left", color: "white", transition: "all 0.2s" }}
-                                        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
-                                        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                                        style={{
+                                            background: "rgba(255,255,255,0.03)",
+                                            border: "1px solid rgba(255,255,255,0.07)",
+                                            borderRadius: "14px", padding: "1rem",
+                                            cursor: "pointer", textAlign: "left",
+                                            color: "white", transition: "all 0.2s"
+                                        }}
+                                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.07)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+                                        onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"; }}
                                     >
                                         <div style={{ color: s.color, marginBottom: "0.5rem" }}>{s.icon}</div>
-                                        <div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.7)", lineHeight: 1.4 }}>{s.text}</div>
+                                        <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.4 }}>{s.text}</div>
                                     </button>
                                 ))}
                             </div>
@@ -266,13 +328,13 @@ export default function Chat() {
                                 <ChatMessage key={index} msg={msg} saveFavorite={saveFavorite} />
                             ))}
                             {isLoading && (
-                                <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
-                                    <div style={{ width: "36px", height: "36px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                                        <Bot size={18} color="white" />
+                                <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
+                                    <div style={{ width: "34px", height: "34px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                        <Bot size={16} color="white" />
                                     </div>
-                                    <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "16px", padding: "1rem", display: "flex", gap: "4px", alignItems: "center" }}>
+                                    <div style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "0.875rem 1rem", display: "flex", gap: "5px", alignItems: "center" }}>
                                         {[0,1,2].map(i => (
-                                            <div key={i} style={{ width: "8px", height: "8px", background: "#6366f1", borderRadius: "50%", animation: `bounce 1.2s ${i*0.2}s infinite` }} />
+                                            <div key={i} style={{ width: "7px", height: "7px", background: "#6366f1", borderRadius: "50%", animation: `bounce 1.2s ${i*0.2}s infinite` }} />
                                         ))}
                                     </div>
                                 </div>
@@ -283,9 +345,15 @@ export default function Chat() {
                 </div>
 
                 {/* Input Area */}
-                <div style={{ padding: "1rem", borderTop: "1px solid rgba(255,255,255,0.06)", background: "#0f0f0f" }}>
+                <div style={{ padding: "0.875rem 1rem", borderTop: "1px solid rgba(255,255,255,0.06)", background: "#0a0a0a" }}>
                     <form onSubmit={handleSubmit} style={{ maxWidth: "720px", margin: "0 auto" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "8px 12px" }}>
+                        <div style={{
+                            display: "flex", alignItems: "center", gap: "8px",
+                            background: "rgba(255,255,255,0.05)",
+                            border: "1px solid rgba(255,255,255,0.09)",
+                            borderRadius: "16px", padding: "8px 12px",
+                            transition: "border-color 0.2s"
+                        }}>
                             <ImageUpload selectedImage={selectedImage} onImageSelect={setSelectedImage} onImageRemove={() => setSelectedImage(null)} />
                             <input
                                 ref={inputRef}
@@ -296,15 +364,30 @@ export default function Chat() {
                                 disabled={isLoading}
                                 style={{ flex: 1, background: "none", border: "none", color: "white", fontSize: "0.95rem", outline: "none", padding: "0.4rem 0" }}
                             />
-                            <button type="button" onClick={startRecording} style={{ background: "none", border: "none", color: isRecording ? "#ef4444" : "rgba(255,255,255,0.4)", cursor: "pointer", padding: "0.4rem", display: "flex" }}>
-                                <Mic size={20} />
+                            <button type="button" onClick={startRecording} style={{
+                                background: isRecording ? "rgba(239,68,68,0.15)" : "none",
+                                border: "none",
+                                color: isRecording ? "#ef4444" : "rgba(255,255,255,0.35)",
+                                cursor: "pointer", padding: "0.4rem", display: "flex", borderRadius: "8px"
+                            }}>
+                                <Mic size={19} />
                             </button>
                             <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading}
-                                style={{ width: "36px", height: "36px", background: (input.trim() || selectedImage) ? "#6366f1" : "rgba(255,255,255,0.1)", border: "none", borderRadius: "10px", color: "white", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "background 0.2s" }}>
-                                <Send size={16} />
+                                style={{
+                                    width: "34px", height: "34px",
+                                    background: (input.trim() || selectedImage) ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.08)",
+                                    border: "none", borderRadius: "10px", color: "white",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    cursor: (input.trim() || selectedImage) ? "pointer" : "not-allowed",
+                                    flexShrink: 0, transition: "all 0.2s",
+                                    boxShadow: (input.trim() || selectedImage) ? "0 4px 12px rgba(99,102,241,0.35)" : "none"
+                                }}>
+                                <Send size={15} />
                             </button>
                         </div>
-                        <p style={{ textAlign: "center", fontSize: "0.75rem", color: "rgba(255,255,255,0.2)", margin: "0.5rem 0 0" }}>MobileAssist AI can make mistakes. Verify important info.</p>
+                        <p style={{ textAlign: "center", fontSize: "0.7rem", color: "rgba(255,255,255,0.18)", margin: "0.5rem 0 0" }}>
+                            MobileAssist AI can make mistakes. Verify important info.
+                        </p>
                     </form>
                 </div>
             </div>
@@ -313,8 +396,10 @@ export default function Chat() {
 
             <style>{`
                 @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
-                ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-                input::placeholder { color: rgba(255,255,255,0.25); }
+                ::-webkit-scrollbar { width: 4px; }
+                ::-webkit-scrollbar-track { background: transparent; }
+                ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+                input::placeholder { color: rgba(255,255,255,0.22); }
             `}</style>
         </div>
     );
