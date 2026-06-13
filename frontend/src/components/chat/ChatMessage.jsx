@@ -3,6 +3,18 @@ import { Bot, User, Star } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
 export default function ChatMessage({ msg, saveFavorite }) {
+    const saveAIResponse = () => {
+        let favorites = JSON.parse(localStorage.getItem("aiFavorites")) || [];
+        const exists = favorites.find(f => f.content === msg.content);
+        if (exists) {
+            alert("Already saved!");
+            return;
+        }
+        favorites.push({ content: msg.content, savedAt: new Date().toISOString() });
+        localStorage.setItem("aiFavorites", JSON.stringify(favorites));
+        alert("✅ Saved to favorites!");
+    };
+
     return (
         <div className={`message ${msg.role === 'user' ? 'user' : ''}`} style={{ alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', display: "flex", gap: "1rem", maxWidth: "85%", flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
             <div className="avatar" style={{ flexShrink: 0 }}>
@@ -12,14 +24,14 @@ export default function ChatMessage({ msg, saveFavorite }) {
             <div className="bubble" style={{ position: "relative" }}>
                 {msg.image && (
                     <div style={{ marginBottom: "0.75rem" }}>
-                        <img 
-                            src={msg.image} 
-                            alt="Uploaded attachment" 
-                            style={{ maxWidth: "240px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 4px 6px rgba(0,0,0,0.2)" }} 
+                        <img
+                            src={msg.image}
+                            alt="Uploaded attachment"
+                            style={{ maxWidth: "240px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 4px 6px rgba(0,0,0,0.2)" }}
                         />
                     </div>
                 )}
-                
+
                 {msg.content && (
                     <div style={{ lineHeight: 1.6 }}>
                         <ReactMarkdown
@@ -41,13 +53,30 @@ export default function ChatMessage({ msg, saveFavorite }) {
                     </div>
                 )}
 
-                {/* Single Phone Result */}
+                {/* Single Phone Result - DB */}
                 {msg.phone && !msg.phones?.length && (
                     <Star
                         size={20}
                         onClick={() => saveFavorite(msg.phone)}
                         style={{ position: "absolute", top: "10px", right: "10px", cursor: "pointer", color: "#fbbf24" }}
                     />
+                )}
+
+                {/* Save AI response button */}
+                {msg.role === "bot" && !msg.phone && !msg.phones?.length && msg.content && (
+                    <div
+                        onClick={saveAIResponse}
+                        style={{
+                            display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                            marginTop: "0.75rem", cursor: "pointer",
+                            color: "#fbbf24", fontSize: "0.8rem", fontWeight: 600,
+                            background: "rgba(251,191,36,0.1)", padding: "0.3rem 0.75rem",
+                            borderRadius: "20px", border: "1px solid rgba(251,191,36,0.2)",
+                            transition: "all 0.2s"
+                        }}
+                    >
+                        <Star size={14} /> Save
+                    </div>
                 )}
 
                 {/* Comparison Result */}
