@@ -28,6 +28,7 @@ if (image) {
 
     const prompt = `You are MobileAssist AI, an expert mobile phone analyst based in India.
 All prices should be in Indian Rupees (INR ₹).
+Always respond in English.
 Analyze this phone image and provide:
 1. Mobile brand and model (if visible)
 2. Color and design
@@ -36,7 +37,7 @@ Analyze this phone image and provide:
 5. Estimated category (budget/midrange/flagship)
 6. Estimated price in INR ₹
 User Question: ${message || "Please analyze this phone image."}
-Respond naturally in a chat-like format.`;
+Respond naturally in a chat-like format in English.`;
 
     const response = await groq.chat.completions.create({
       model: "meta-llama/llama-4-scout-17b-16e-instruct",
@@ -123,7 +124,7 @@ reply: phoneText
 }
 
 // ---------------------------
-// GROQ AI (Multilingual)
+// GROQ AI
 // ---------------------------
 try {
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -135,11 +136,14 @@ const response = await groq.chat.completions.create({
       role: "system",
       content: `You are MobileAssist AI, a smart mobile phone assistant based in India.
 Important Rules:
+- Always reply in English by default
+- Only reply in another language if the user explicitly writes in Hindi, Kannada, Telugu, or another language
+- Never mix languages in one response
 - Always use Indian Rupees (INR ₹) for all prices
 - When user says a number like "20000", assume it is ₹20000 INR
 - Suggest phones available in India
 - Compare phones with Indian market prices
-- Detect the user's language and reply in the same language`
+- Keep responses clear and well formatted`
     },
     {
       role: "user",
