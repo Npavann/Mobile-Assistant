@@ -304,7 +304,6 @@ export default function Chat() {
                                 <Send size={16} />
                             </button>
                         </div>
-                        <p style={{ textAlign: "center", fontSize: "0.75rem", color: "rgba(255,255,255,0.2)", margin: "0.5rem 0 0" }}>MobileAssist AI can make mistakes. Verify important info.</p>
                     </form>
                 </div>
             </div>
