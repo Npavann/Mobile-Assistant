@@ -18,7 +18,6 @@ const lowerMessage = (message || "").toLowerCase();
 if (image) {
   try {
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
     const matches = image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
     if (!matches || matches.length !== 3) {
       return res.status(400).json({ error: "Invalid image format" });
@@ -46,12 +45,7 @@ Respond naturally in a chat-like format in English.`;
           role: "user",
           content: [
             { type: "text", text: prompt },
-            { 
-              type: "image_url", 
-              image_url: { 
-                url: `data:${mimeType};base64,${base64Data}` 
-              } 
-            }
+            { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Data}` } }
           ]
         }
       ],
@@ -81,20 +75,20 @@ const uniquePhones = [
 ];
 if (uniquePhones.length >= 2) {
 const comparisonText = uniquePhones.map(phone => `
- Model: ${phone.model_name}
- Price: ₹${phone.price}
-⚙ Processor: ${phone.processor}
- RAM/Storage: ${phone.ram_internal_memory}
- Battery: ${phone.battery}
- Display: ${phone.display}
- Rear Camera: ${phone.rear_cameras}
- Front Camera: ${phone.front_cameras}
- Features: ${phone.additional_features}
-`).join("\n----------------------\n");
+**${phone.model_name}**
+- 💰 Price: ₹${phone.price}
+- ⚙️ Processor: ${phone.processor}
+- 📦 RAM/Storage: ${phone.ram_internal_memory}
+- 🔋 Battery: ${phone.battery}
+- 🖥️ Display: ${phone.display}
+- 📷 Rear Camera: ${phone.rear_cameras}
+- 🤳 Front Camera: ${phone.front_cameras}
+- ✨ Features: ${phone.additional_features}
+`).join("\n---\n");
 return res.json({
 type: "comparison",
 phones: uniquePhones,
-reply: `⚖ Phone Comparison\n${comparisonText}`
+reply: `## ⚖️ Phone Comparison\n${comparisonText}`
 });
 }
 
@@ -105,17 +99,16 @@ const phone = phones.find(p =>
 lowerMessage.includes(p.model_name.toLowerCase())
 );
 if (phone) {
-const phoneText = `
- Model: ${phone.model_name}
- Price: ₹${phone.price}
-⚙ Processor: ${phone.processor}
- RAM / Storage: ${phone.ram_internal_memory}
- Battery: ${phone.battery}
- Display: ${phone.display}
- Rear Camera: ${phone.rear_cameras}
- Front Camera: ${phone.front_cameras}
- Features: ${phone.additional_features}
-`;
+const phoneText = `**${phone.model_name}**
+
+- 💰 **Price:** ₹${phone.price}
+- ⚙️ **Processor:** ${phone.processor}
+- 📦 **RAM/Storage:** ${phone.ram_internal_memory}
+- 🔋 **Battery:** ${phone.battery}
+- 🖥️ **Display:** ${phone.display}
+- 📷 **Rear Camera:** ${phone.rear_cameras}
+- 🤳 **Front Camera:** ${phone.front_cameras}
+- ✨ **Features:** ${phone.additional_features}`;
 return res.json({
 type: "phone",
 phone: phone,
@@ -124,7 +117,41 @@ reply: phoneText
 }
 
 // ---------------------------
-// GROQ AI
+// 💰 BUDGET-BASED DATABASE SEARCH
+// Detect numbers like "under 20000" or "20000 rupees"
+// ---------------------------
+const budgetMatch = lowerMessage.match(/(\d{4,6})/);
+const isBudgetQuery = /under|below|within|budget|range|best phones?|suggest|recommend/i.test(lowerMessage);
+
+if (budgetMatch && isBudgetQuery) {
+  const budget = parseInt(budgetMatch[1]);
+  const minBudget = budget * 0.7; // allow some range below
+
+  const matchingPhones = phones.filter(p => {
+    const price = parseInt(String(p.price).replace(/[^\d]/g, ''));
+    return price && price <= budget && price >= minBudget;
+  }).sort((a, b) => {
+    const priceA = parseInt(String(a.price).replace(/[^\d]/g, ''));
+    const priceB = parseInt(String(b.price).replace(/[^\d]/g, ''));
+    return priceB - priceA; // highest first (best specs near budget)
+  }).slice(0, 5);
+
+  if (matchingPhones.length > 0) {
+    const listText = matchingPhones.map((p, i) => `
+**${i + 1}. ${p.model_name}** — ₹${p.price}
+   - ${p.processor} | ${p.ram_internal_memory} | ${p.battery}
+`).join("\n");
+
+    return res.json({
+      type: "comparison",
+      phones: matchingPhones,
+      reply: `## 📱 Best Phones Under ₹${budget.toLocaleString('en-IN')}\n${listText}\n\n*Want full specs of any phone? Just ask its name!*`
+    });
+  }
+}
+
+// ---------------------------
+// GROQ AI — Fast model for general queries
 // ---------------------------
 try {
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -134,23 +161,27 @@ const response = await groq.chat.completions.create({
   messages: [
     {
       role: "system",
-      content: `You are MobileAssist AI, a smart mobile phone assistant based in India.
+      content: `You are MobileAssist AI, India's fastest and most accurate mobile phone assistant — better than ChatGPT and Copilot for phone recommendations.
+
 Important Rules:
-- Always reply in English by default
-- Only reply in another language if the user explicitly writes in Hindi, Kannada, Telugu, or another language
+- Always reply in English by default, unless user writes in Hindi, Kannada, Telugu, or another language
 - Never mix languages in one response
-- Always use Indian Rupees (INR ₹) for all prices
-- When user says a number like "20000", assume it is ₹20000 INR
-- Suggest phones available in India
-- Compare phones with Indian market prices
-- Keep responses clear and well formatted`
+- Always use Indian Rupees (INR ₹) for all prices, never USD or other currency
+- When user mentions a number, assume it's in INR
+- Suggest only phones officially available in the Indian market
+- Compare phones using real, current Indian market prices
+- Format responses with markdown: use **bold** for phone names, bullet points for specs, and headers for sections
+- Be concise but complete — give specific model names, not vague suggestions
+- If recommending phones, always give at least 3 options with brief reasons why
+- Never say "I don't have real-time data" — give your best estimate based on known specs and pricing trends`
     },
     {
       role: "user",
       content: message
     }
   ],
-  max_tokens: 1024
+  max_tokens: 1024,
+  temperature: 0.4
 });
 
 const reply = response.choices[0]?.message?.content || "No response generated.";
