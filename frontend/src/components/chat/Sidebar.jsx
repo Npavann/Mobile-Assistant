@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Trash2, X, Plus, Star, Database, MessageSquare } from 'lucide-react';
+import { Search, Trash2, X, Plus, Star, Database, MessageSquare, Upload } from 'lucide-react';
 import HistoryItem from './HistoryItem';
 import { useNavigate } from 'react-router-dom';
 
@@ -81,6 +81,17 @@ export default function Sidebar({
                     </div>
                     Favorite Phones
                 </button>
+
+                <button onClick={() => { navigate('/user-login'); setIsOpen(false); }}
+                    style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.7rem 0.75rem", background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", borderRadius: "10px", fontSize: "0.875rem", fontWeight: 500, transition: "all 0.2s" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(16,185,129,0.08)"; e.currentTarget.style.color = "#34d399"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>
+                    <div style={{ width: "30px", height: "30px", background: "rgba(16,185,129,0.1)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Upload size={15} color="#34d399" />
+                    </div>
+                    Upload Data (User)
+                </button>
+
                 <button onClick={() => { navigate('/admin-login'); setIsOpen(false); }}
                     style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.7rem 0.75rem", background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", borderRadius: "10px", fontSize: "0.875rem", fontWeight: 500, transition: "all 0.2s" }}
                     onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,102,241,0.08)"; e.currentTarget.style.color = "#818cf8"; }}
