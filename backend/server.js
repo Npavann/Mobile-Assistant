@@ -5,6 +5,8 @@ const cors = require('cors');
 const uploadRoutes = require('./routes/upload');
 const chatRoutes = require('./routes/chat');
 const app = express();
+const userAuthRoutes = require('./routes/userAuth');
+app.use('/api/user', userAuthRoutes);
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
