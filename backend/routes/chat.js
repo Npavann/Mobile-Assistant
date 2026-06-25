@@ -62,13 +62,12 @@ Respond naturally in a chat-like format in English.`;
 
 // ---------------------------
 // Quick check: does message look like a phone name/budget query?
-// Only fetch DB if it does — saves time for general AI questions
 // ---------------------------
 const looksLikePhoneQuery = /\d{4,6}|iphone|samsung|vivo|oppo|realme|redmi|xiaomi|oneplus|motorola|poco|nokia|asus|google pixel|nothing phone/i.test(lowerMessage);
 
 let phones = [];
 if (looksLikePhoneQuery) {
-  phones = await Mobile.find().lean(); // .lean() = faster, returns plain JS objects
+  phones = await Mobile.find().lean();
 }
 
 // ---------------------------
@@ -159,7 +158,7 @@ if (phones.length > 0) {
 }
 
 // ---------------------------
-// GROQ AI — Fast model (8B instant) for general queries
+// GROQ AI — Fast model (8B instant), restricted to mobile topics only
 // ---------------------------
 try {
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -171,7 +170,13 @@ const response = await groq.chat.completions.create({
       role: "system",
       content: `You are MobileAssist AI, India's fastest mobile phone assistant.
 
-Rules:
+STRICT SCOPE RULE (most important — follow this above everything else):
+- You ONLY answer questions about mobile phones, smartphones, their specifications, prices, comparisons, brands, accessories, and buying advice
+- If the user asks ANYTHING unrelated to mobile phones (general knowledge, coding, science, NLP, AI concepts, jokes, history, personal advice, or any other topic), do NOT answer it
+- For off-topic questions, respond ONLY with exactly this: "I'm MobileAssist AI — I can only help with mobile phone related questions like specs, prices, and recommendations. Ask me about phones! 📱"
+- Do not explain why you can't answer, do not give a partial answer, and do not apologize at length — just give that one redirect line
+
+When the question IS about phones, follow these rules:
 - Reply in English by default, unless user writes in Hindi, Kannada, Telugu, or another language
 - Never mix languages in one response
 - Always use Indian Rupees (INR ₹), never USD
