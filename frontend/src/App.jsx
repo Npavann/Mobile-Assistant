@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Chat from './pages/Chat'
 import Admin from './pages/Admin'
@@ -8,8 +9,15 @@ import UserLogin from './pages/UserLogin'
 import UserUpload from './pages/UserUpload'
 import UserProtectedRoute from './components/UserProtectedRoute'
 import { UserAuthProvider } from './context/UserAuthContext'
+import AppLock from './pages/AppLock'
 
 function App() {
+  const [unlocked, setUnlocked] = useState(false);
+
+  if (!unlocked) {
+    return <AppLock onUnlock={() => setUnlocked(true)} />;
+  }
+
   return (
     <UserAuthProvider>
       <div style={{ height: "100vh", overflow: "hidden" }}>
