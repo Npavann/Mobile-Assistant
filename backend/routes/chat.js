@@ -38,7 +38,7 @@ User Question: ${message || "Please analyze this phone image."}
 Respond naturally in a chat-like format in English.`;
 
     const response = await groq.chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      model: "qwen/qwen3.6-27b",
       messages: [
         {
           role: "user",
@@ -48,7 +48,8 @@ Respond naturally in a chat-like format in English.`;
           ]
         }
       ],
-      max_tokens: 800
+      max_tokens: 800,
+      thinking: { type: "disabled" }
     });
 
     const reply = response.choices[0]?.message?.content || "No response generated.";
@@ -158,13 +159,13 @@ if (phones.length > 0) {
 }
 
 // ---------------------------
-// GROQ AI — Fast model (8B instant), restricted to mobile topics only
+// GROQ AI — Chat
 // ---------------------------
 try {
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const response = await groq.chat.completions.create({
-  model: "llama-3.1-8b-instant",
+  model: "llama-3.3-70b-versatile",
   messages: [
     {
       role: "system",
@@ -172,11 +173,10 @@ const response = await groq.chat.completions.create({
 
 STRICT SCOPE RULE (most important — follow this above everything else):
 - You ONLY answer questions about mobile phones, smartphones, their specifications, prices, comparisons, brands, accessories, and buying advice
-- If the user asks ANYTHING unrelated to mobile phones (general knowledge, coding, science, NLP, AI concepts, jokes, history, personal advice, or any other topic), do NOT answer it
-- For off-topic questions, respond ONLY with exactly this: "I'm MobileAssist AI — I can only help with mobile phone related questions like specs, prices, and recommendations. Ask me about phones! 📱"
-- Do not explain why you can't answer, do not give a partial answer, and do not apologize at length — just give that one redirect line
+- If the user asks ANYTHING unrelated to mobile phones, respond ONLY with: "I'm MobileAssist AI — I can only help with mobile phone related questions like specs, prices, and recommendations. Ask me about phones! 📱"
+- Do NOT answer the off-topic question even partially
 
-When the question IS about phones, follow these rules:
+When the question IS about phones:
 - Reply in English by default, unless user writes in Hindi, Kannada, Telugu, or another language
 - Never mix languages in one response
 - Always use Indian Rupees (INR ₹), never USD
