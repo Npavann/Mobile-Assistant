@@ -48,8 +48,7 @@ Respond naturally in a chat-like format in English.`;
           ]
         }
       ],
-      max_tokens: 800,
-      thinking: { type: "disabled" }
+      max_tokens: 800
     });
 
     const reply = response.choices[0]?.message?.content || "No response generated.";
