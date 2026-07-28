@@ -1,0 +1,3073 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+backend/
+  models/
+    Mobile.js
+    User.js
+  routes/
+    auth.js
+    chat.js
+    favorites.js
+    upload.js
+    userAuth.js
+  uploads/
+    .gitkeep
+  package.json
+  server.js
+frontend/
+  public/
+    icon.svg
+  src/
+    components/
+      chat/
+        ChatMessage.jsx
+        FavoritesModal.jsx
+        HistoryItem.jsx
+        ImageUpload.jsx
+        Sidebar.jsx
+      ProtectedRoute.jsx
+      UserProtectedRoute.jsx
+    context/
+      AuthContext.jsx
+      UserAuthContext.jsx
+    pages/
+      Admin.jsx
+      AdminLogin.jsx
+      Chat.jsx
+      Favorites.jsx
+      History.jsx
+      UserLogin.jsx
+      UserUpload.jsx
+    utils/
+      storage.js
+      VisionService.js
+    App.jsx
+    index.css
+    main.jsx
+  index.html
+  package.json
+  postcss.config.js
+  tailwind.config.js
+  vercel.json
+  vite.config.js
+.gitignore
+example_mobiles.csv
+README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="backend/models/Mobile.js">
+const mongoose = require('mongoose');
+
+const mobileSchema = new mongoose.Schema({
+  model_name: String,
+  price: String,
+  expert_rating: String,
+  user_rating: String,
+  processor: String,
+  rear_cameras: String,
+  front_cameras: String,
+  display: String,
+  ram_internal_memory: String,
+  battery: String,
+  operating_system: String,
+  additional_features: String,
+  review: String,
+  review_link: String
+});
+
+module.exports = mongoose.model('Mobile', mobileSchema);
+</file>
+
+<file path="backend/models/User.js">
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('User', userSchema);
+</file>
+
+<file path="backend/routes/auth.js">
+
+</file>
+
+<file path="backend/routes/favorites.js">
+const express = require("express");
+const router = express.Router();
+
+let favorites = []; // temporary storage
+
+// Add favorite
+router.post("/add", (req, res) => {
+  const { phone } = req.body;
+
+  if (!phone) {
+    return res.status(400).json({ error: "Phone required" });
+  }
+
+  favorites.push(phone);
+
+  res.json({
+    message: "Phone added to favorites",
+    favorites
+  });
+});
+
+// Get favorites
+router.get("/", (req, res) => {
+  res.json({ favorites });
+});
+
+module.exports = router;
+</file>
+
+<file path="backend/routes/userAuth.js">
+const express = require('express');
+const router = express.Router();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'mobileassist_secret_key';
+
+// Signup
+router.post('/signup', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already registered" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ name, email, password: hashedPassword });
+    await user.save();
+
+    const token = jwt.sign({ userId: user._id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.json({ success: true, token, user: { name: user.name, email: user.email } });
+  } catch (error) {
+    console.error("Signup error:", error);
+    res.status(500).json({ error: "Server error during signup" });
+  }
+});
+
+// Login
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
+
+    const token = jwt.sign({ userId: user._id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.json({ success: true, token, user: { name: user.name, email: user.email } });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Server error during login" });
+  }
+});
+
+// Middleware to verify token
+const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: "No token provided" });
+
+  jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(401).json({ error: "Invalid or expired token" });
+    req.user = decoded;
+    next();
+  });
+};
+
+router.get('/verify', verifyToken, (req, res) => {
+  res.json({ success: true, user: req.user });
+});
+
+module.exports = router;
+module.exports.verifyToken = verifyToken;
+</file>
+
+<file path="backend/uploads/.gitkeep">
+
+</file>
+
+<file path="frontend/public/icon.svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0f172a" rx="112" />
+  <circle cx="256" cy="256" r="140" fill="none" stroke="#6366f1" stroke-width="24" />
+  <path d="M 256 160 L 320 256 L 256 352 L 192 256 Z" fill="#8b5cf6" />
+</svg>
+</file>
+
+<file path="frontend/src/components/chat/FavoritesModal.jsx">
+import React, { useState, useEffect } from 'react';
+import { X, Trash2, Star } from 'lucide-react';
+
+export default function FavoritesModal({ isOpen, onClose }) {
+    const [favorites, setFavorites] = useState([]);
+
+    useEffect(() => {
+        if (isOpen) {
+            const savedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
+            setFavorites(savedFavorites);
+        }
+    }, [isOpen]);
+
+    if (!isOpen) return null;
+
+    const removeFavorite = (phone) => {
+        const updatedFavorites = favorites.filter(
+            p => p.model !== phone.model
+        );
+        setFavorites(updatedFavorites);
+        localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+    };
+
+    return (
+        <div style={{
+            position: 'absolute',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+        }}>
+            <div style={{
+                background: 'var(--bg-card)',
+                width: '90%',
+                maxWidth: '500px',
+                maxHeight: '80vh',
+                borderRadius: '12px',
+                border: '1px solid var(--border)',
+                display: 'flex',
+                flexDirection: 'column',
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3)'
+            }}>
+                {/* Header */}
+                <div style={{
+                    padding: '1.25rem',
+                    borderBottom: '1px solid var(--border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}>
+                    <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.25rem' }}>
+                        <Star size={20} color="#fbbf24" />
+                        Favorite Phones
+                    </h2>
+                    <button onClick={onClose} className="icon-btn" style={{ padding: '0.25rem' }}>
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="custom-scrollbar" style={{
+                    padding: '1.25rem',
+                    overflowY: 'auto',
+                    flex: 1
+                }}>
+                    {favorites.length === 0 ? (
+                        <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem 0' }}>
+                            No favorite phones yet.
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {favorites.map((phone, i) => (
+                                <div key={i} style={{
+                                    background: 'rgba(255, 255, 255, 0.03)',
+                                    borderRadius: '8px',
+                                    padding: '1rem',
+                                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '0.5rem',
+                                    position: 'relative'
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <h3 style={{ margin: 0, color: '#a5b4fc', fontSize: '1.1rem' }}>{phone.model_name || phone.model}</h3>
+                                        <button 
+                                            onClick={() => removeFavorite(phone)} 
+                                            className="icon-btn" 
+                                            style={{ color: 'var(--error)', padding: '0.25rem' }}
+                                            title="Remove from favorites"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                    
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                                        {phone.price && <div><strong>Price:</strong> ₹{phone.price}</div>}
+                                        {phone.processor && <div><strong>Chip:</strong> {phone.processor.substring(0, 20)}{phone.processor.length > 20 ? '...' : ''}</div>}
+                                        {phone.battery && <div><strong>Battery:</strong> {phone.battery}</div>}
+                                        {phone.display && <div><strong>Display:</strong> {phone.display.substring(0, 20)}{phone.display.length > 20 ? '...' : ''}</div>}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="frontend/src/components/ProtectedRoute.jsx">
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
+export default function ProtectedRoute({ children }) {
+  const { isAdmin } = useAuth();
+
+  if (!isAdmin) {
+    return <Navigate to="/admin-login" replace />;
+  }
+
+  return children;
+}
+</file>
+
+<file path="frontend/src/components/UserProtectedRoute.jsx">
+import { Navigate } from 'react-router-dom';
+import { useUserAuth } from '../context/UserAuthContext';
+
+export default function UserProtectedRoute({ children }) {
+    const { isLoggedIn } = useUserAuth();
+    if (!isLoggedIn) {
+        return <Navigate to="/user-login" replace />;
+    }
+    return children;
+}
+</file>
+
+<file path="frontend/src/pages/Favorites.jsx">
+import { useEffect, useState } from "react"
+
+function Favorites() {
+
+  const [favorites, setFavorites] = useState([])
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("favorites")) || []
+    setFavorites(saved)
+  }, [])
+
+  const removeFavorite = (id) => {
+
+    const updated = favorites.filter(phone => phone._id !== id)
+
+    setFavorites(updated)
+
+    localStorage.setItem("favorites", JSON.stringify(updated))
+  }
+
+  return (
+    <div>
+
+      <h2>⭐ Favorite Phones</h2>
+
+      {favorites.length === 0 && <p>No favorite phones yet</p>}
+
+      {favorites.map(phone => (
+
+        <div key={phone._id} style={{border:"1px solid gray",padding:"10px",margin:"10px"}}>
+
+          <h3>{phone.model_name}</h3>
+          <p>Price: ₹{phone.price}</p>
+          <p>Processor: {phone.processor}</p>
+          <p>Battery: {phone.battery}</p>
+
+          <button onClick={() => removeFavorite(phone._id)}>
+            Remove
+          </button>
+
+        </div>
+
+      ))}
+
+    </div>
+  )
+
+}
+
+export default Favorites
+</file>
+
+<file path="frontend/src/pages/History.jsx">
+import { useState, useEffect } from "react";
+
+export default function History() {
+  const [sessions, setSessions] = useState([]);
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("chatSessions")) || [];
+    setSessions(saved);
+  }, []);
+
+  const clearHistory = () => {
+    localStorage.removeItem("chatSessions");
+    localStorage.removeItem("currentChatId");
+    setSessions([]);
+  };
+
+  return (
+    <div className="page">
+      <h1 className="page-title">Chat History</h1>
+
+      <button
+        onClick={clearHistory}
+        style={{
+          marginBottom: "15px",
+          padding: "8px 12px",
+          background: "#ff4d4d",
+          border: "none",
+          borderRadius: "6px",
+          color: "white",
+          cursor: "pointer"
+        }}
+      >
+        Clear All Chats
+      </button>
+
+      {sessions.length === 0 ? (
+        <p>No chats available</p>
+      ) : (
+        sessions.map(chat => (
+          <div
+            key={chat.id}
+            onClick={() => {
+              localStorage.setItem("currentChatId", chat.id);
+              window.location.href = "/";
+            }}
+            style={{
+              marginBottom: "10px",
+              padding: "12px",
+              background: "#1e1e2f",
+              borderRadius: "8px",
+              cursor: "pointer"
+            }}
+          >
+            <strong>{chat.title}</strong>
+            <p style={{ fontSize: "12px", color: "#aaa" }}>
+              {chat.messages.length} messages
+            </p>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/utils/storage.js">
+export const CHAT_STORAGE_KEY = "chatHistory";
+
+export const getHistory = () => {
+    try {
+        const data = localStorage.getItem(CHAT_STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    } catch (error) {
+        console.error("Failed to parse chat history", error);
+        return [];
+    }
+};
+
+export const saveHistory = (history) => {
+    try {
+        localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(history));
+    } catch (error) {
+        console.error("Failed to save chat history", error);
+    }
+};
+
+export const createNewSession = (initialMessage) => {
+    return {
+        id: Date.now().toString(),
+        title: "New Chat",
+        messages: initialMessage ? [initialMessage] : [],
+        updatedAt: new Date().toISOString()
+    };
+};
+</file>
+
+<file path="frontend/src/utils/VisionService.js">
+export const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (error) => reject(error);
+    });
+};
+</file>
+
+<file path="frontend/postcss.config.js">
+export default {
+  plugins: {
+    '@tailwindcss/postcss': {},
+    autoprefixer: {},
+  },
+}
+</file>
+
+<file path="frontend/tailwind.config.js">
+/** @type {import('tailwindcss').Config} */
+export default {
+  corePlugins: {
+    preflight: false,
+  },
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+</file>
+
+<file path="frontend/vercel.json">
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+</file>
+
+<file path=".gitignore">
+node_modules
+dist
+
+frontend/node_modules
+frontend/dist
+
+backend/node_modules
+
+.env
+.env.local
+.env
+backend/.env
+</file>
+
+<file path="example_mobiles.csv">
+brand,model,price,ram,storage,battery,display,camera,processor
+Samsung,Galaxy S24 Ultra,1299,12GB,256GB,5000mAh,6.8 inch AMOLED,200MP+50MP+12MP+10MP,Snapdragon 8 Gen 3
+Apple,iPhone 15 Pro Max,1199,8GB,256GB,4422mAh,6.7 inch OLED,48MP+12MP+12MP,A17 Pro
+Google,Pixel 8 Pro,999,12GB,128GB,5050mAh,6.7 inch OLED,50MP+48MP+48MP,Google Tensor G3
+OnePlus,12,799,12GB,256GB,5400mAh,6.82 inch AMOLED,50MP+64MP+48MP,Snapdragon 8 Gen 3
+Samsung,Galaxy A54 5G,449,6GB,128GB,5000mAh,6.4 inch Super AMOLED,50MP+12MP+5MP,Exynos 1380
+Motorola,Moto G Power 2024,299,8GB,128GB,5000mAh,6.7 inch LCD,50MP+8MP,Dimensity 7020
+Nothing,Phone (2a),349,8GB,128GB,5000mAh,6.7 inch AMOLED,50MP+50MP,Dimensity 7200 Pro
+Apple,iPhone 13,599,4GB,128GB,3240mAh,6.1 inch OLED,12MP+12MP,A15 Bionic
+</file>
+
+<file path="README.md">
+# AI Mobile Assistant
+
+A Full-Stack MERN Application that allows an admin to upload a CSV of mobile specifications and a user to converse with an AI agent powered by Gemini 1.5 Flash via a Retrieval-Augmented Generation (RAG) implementation. 
+
+## Features
+- **Admin Panel**: Seamlessly upload a CSV file containing mobile device specifications.
+- **AI Chat Agent**: Engage with a smart assistant to find the best phone under a price, compare models, and filter by specifications like RAM, battery, display, and more.
+- **RAG Implementation**: Fetches data dynamically from MongoDB and passes it as context to Gemini 1.5.
+
+## Project Structure
+- `backend/` - Node.js + Express backend with MongoDB and Google GenAI Integration
+- `frontend/` - React frontend with sleek and premium UI for both Chat and Admin interfaces
+- `example_mobiles.csv` - Built-in test CSV with modern mobile specifications to test the setup.
+
+## Setup Instructions
+
+### 1. Prerequisites
+- [Node.js](https://nodejs.org/) installed
+- [MongoDB](https://www.mongodb.com/try/download/community) installed and running locally (or have a MongoDB Atlas connection string).
+
+### 2. Backend Setup
+1. Open a terminal and navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Configure Environment Variables:
+   Open `backend/.env` and replace `your_gemini_api_key_here` with your actual Google Gemini API Key.
+   ```env
+   PORT=5000
+   MONGODB_URI=mongodb://localhost:27017/mobile_ai_assistant
+   GEMINI_API_KEY=your_actual_key
+   ```
+4. Start the backend server:
+   ```bash
+   node server.js
+   ```
+
+### 3. Frontend Setup
+1. Open a new terminal window and navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the dev server:
+   ```bash
+   npm run dev
+   ```
+
+### 4. How to Use
+1. **Upload Data**: Go to `http://localhost:5173/admin` (or the URL Vite provides). Click on "Choose CSV File", select `example_mobiles.csv` in the root directory, and upload.
+2. **Chat**: Go to `http://localhost:5173/` and test queries like *"Which is the best phone under $800?"* or *"Compare Galaxy S24 Ultra and iPhone 15 Pro Max"*.
+</file>
+
+<file path="backend/routes/upload.js">
+const express = require('express');
+const router = express.Router();
+const multer = require('multer');
+const csv = require('csv-parser');
+const fs = require('fs');
+const Mobile = require('../models/Mobile');
+const { verifyToken } = require('./userAuth');
+
+const upload = multer({ dest: 'uploads/' });
+
+router.post('/csv', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  const results = [];
+  const filePath = req.file.path;
+
+  fs.createReadStream(filePath)
+    .pipe(csv())
+    .on('data', (data) => {
+      results.push({
+        model_name: data.model_name,
+        price: data.price,
+        expert_rating: data.expert_rating,
+        user_rating: data.user_rating,
+        processor: data.processor,
+        rear_cameras: data.rear_cameras,
+        front_cameras: data.front_cameras,
+        display: data.display,
+        ram_internal_memory: data.ram_internal_memory,
+        battery: data.battery,
+        operating_system: data.operating_system,
+        additional_features: data.additional_features,
+        review: data.review,
+        review_link: data.review_link
+      });
+    })
+    .on('end', async () => {
+      try {
+        await Mobile.insertMany(results);
+        fs.unlinkSync(filePath);
+        res.json({ message: "CSV uploaded successfully", count: results.length });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Database insert error" });
+      }
+    });
+});
+
+// New protected route for regular users
+router.post('/csv-user', verifyToken, upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  const results = [];
+  const filePath = req.file.path;
+
+  fs.createReadStream(filePath)
+    .pipe(csv())
+    .on('data', (data) => {
+      results.push({
+        model_name: data.model_name,
+        price: data.price,
+        expert_rating: data.expert_rating,
+        user_rating: data.user_rating,
+        processor: data.processor,
+        rear_cameras: data.rear_cameras,
+        front_cameras: data.front_cameras,
+        display: data.display,
+        ram_internal_memory: data.ram_internal_memory,
+        battery: data.battery,
+        operating_system: data.operating_system,
+        additional_features: data.additional_features,
+        review: data.review,
+        review_link: data.review_link
+      });
+    })
+    .on('end', async () => {
+      try {
+        await Mobile.insertMany(results);
+        fs.unlinkSync(filePath);
+        res.json({ message: "CSV uploaded successfully", count: results.length, uploadedBy: req.user.email });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Database insert error" });
+      }
+    });
+});
+
+module.exports = router;
+</file>
+
+<file path="frontend/src/components/chat/HistoryItem.jsx">
+import { MessageSquare, Trash2, Edit2, Check, X } from 'lucide-react';
+import { useState } from 'react';
+
+export default function HistoryItem({
+    session, isActive, onSelect, onDelete, onRename, isCollapsed
+}) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editTitle, setEditTitle] = useState(session.title);
+    const [isHovered, setIsHovered] = useState(false);
+
+    const handleEditSubmit = (e) => {
+        e.stopPropagation();
+        if (editTitle.trim()) {
+            onRename(session.id, editTitle);
+        } else {
+            setEditTitle(session.title);
+        }
+        setIsEditing(false);
+    };
+
+    return (
+        <div
+            onClick={() => !isEditing && onSelect(session.id)}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "0.6rem 0.75rem",
+                borderRadius: "10px",
+                cursor: "pointer",
+                background: isActive
+                    ? "rgba(99,102,241,0.15)"
+                    : isHovered ? "rgba(255,255,255,0.05)" : "transparent",
+                border: isActive
+                    ? "1px solid rgba(99,102,241,0.25)"
+                    : "1px solid transparent",
+                transition: "all 0.15s ease",
+                marginBottom: "2px",
+                position: "relative"
+            }}
+        >
+            {/* Left side - icon + title */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flex: 1, minWidth: 0 }}>
+                <div style={{
+                    width: "28px", height: "28px", flexShrink: 0,
+                    background: isActive ? "rgba(99,102,241,0.25)" : "rgba(255,255,255,0.05)",
+                    borderRadius: "7px",
+                    display: "flex", alignItems: "center", justifyContent: "center"
+                }}>
+                    <MessageSquare size={13} color={isActive ? "#818cf8" : "rgba(255,255,255,0.35)"} />
+                </div>
+
+                {!isCollapsed && (
+                    isEditing ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px", flex: 1 }}
+                            onClick={e => e.stopPropagation()}>
+                            <input
+                                autoFocus
+                                value={editTitle}
+                                onChange={e => setEditTitle(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && handleEditSubmit(e)}
+                                style={{
+                                    flex: 1, background: "rgba(255,255,255,0.06)",
+                                    border: "1px solid rgba(99,102,241,0.4)",
+                                    borderRadius: "6px", color: "white",
+                                    padding: "3px 8px", fontSize: "0.8rem", outline: "none"
+                                }}
+                            />
+                            <button onClick={handleEditSubmit}
+                                style={{ background: "rgba(16,185,129,0.15)", border: "none", color: "#10b981", cursor: "pointer", borderRadius: "5px", padding: "3px 6px", display: "flex" }}>
+                                <Check size={12} />
+                            </button>
+                            <button onClick={() => { setIsEditing(false); setEditTitle(session.title); }}
+                                style={{ background: "rgba(239,68,68,0.15)", border: "none", color: "#ef4444", cursor: "pointer", borderRadius: "5px", padding: "3px 6px", display: "flex" }}>
+                                <X size={12} />
+                            </button>
+                        </div>
+                    ) : (
+                        <span style={{
+                            fontSize: "0.85rem",
+                            fontWeight: isActive ? 500 : 400,
+                            color: isActive ? "white" : "rgba(255,255,255,0.55)",
+                            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                            flex: 1
+                        }}>
+                            {session.title}
+                        </span>
+                    )
+                )}
+            </div>
+
+            {/* Right side - action buttons (show on hover or active) */}
+            {!isCollapsed && !isEditing && (isHovered || isActive) && (
+                <div style={{ display: "flex", gap: "4px", flexShrink: 0, marginLeft: "0.5rem" }}>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+                        style={{
+                            background: "rgba(255,255,255,0.06)", border: "none",
+                            color: "rgba(255,255,255,0.4)", cursor: "pointer",
+                            borderRadius: "6px", padding: "4px", display: "flex",
+                            transition: "all 0.15s"
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "white"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
+                    >
+                        <Edit2 size={12} />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(session.id); }}
+                        style={{
+                            background: "rgba(239,68,68,0.08)", border: "none",
+                            color: "rgba(239,68,68,0.5)", cursor: "pointer",
+                            borderRadius: "6px", padding: "4px", display: "flex",
+                            transition: "all 0.15s"
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.2)"; e.currentTarget.style.color = "#ef4444"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "rgba(239,68,68,0.5)"; }}
+                    >
+                        <Trash2 size={12} />
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
+</file>
+
+<file path="frontend/src/context/AuthContext.jsx">
+import { createContext, useContext, useState } from 'react';
+
+const AuthContext = createContext();
+
+export function AuthProvider({ children }) {
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    const login = (username, password) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                const adminUser = import.meta.env.VITE_ADMIN_USERNAME || 'admin';
+                const adminPass = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
+                if (username === adminUser && password === adminPass) {
+                    setIsAdmin(true);
+                    resolve({ success: true });
+                } else {
+                    reject(new Error('Invalid credentials'));
+                }
+            }, 800);
+        });
+    };
+
+    const logout = () => {
+        setIsAdmin(false);
+    };
+
+    return (
+        <AuthContext.Provider value={{ isAdmin, login, logout, isLoading: false }}>
+            {children}
+        </AuthContext.Provider>
+    );
+}
+
+export const useAuth = () => useContext(AuthContext);
+</file>
+
+<file path="frontend/src/context/UserAuthContext.jsx">
+import { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+
+const UserAuthContext = createContext();
+
+export function UserAuthProvider({ children }) {
+    const [user, setUser] = useState(null);
+    const [token, setToken] = useState(null);
+
+    useEffect(() => {
+        const storedToken = sessionStorage.getItem('userToken');
+        const storedUser = sessionStorage.getItem('userData');
+        if (storedToken && storedUser) {
+            setToken(storedToken);
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
+
+    const signup = async (name, email, password) => {
+        const response = await axios.post(
+            `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/user/signup`,
+            { name, email, password }
+        );
+        const { token, user } = response.data;
+        sessionStorage.setItem('userToken', token);
+        sessionStorage.setItem('userData', JSON.stringify(user));
+        setToken(token);
+        setUser(user);
+        return user;
+    };
+
+    const login = async (email, password) => {
+        const response = await axios.post(
+            `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/user/login`,
+            { email, password }
+        );
+        const { token, user } = response.data;
+        sessionStorage.setItem('userToken', token);
+        sessionStorage.setItem('userData', JSON.stringify(user));
+        setToken(token);
+        setUser(user);
+        return user;
+    };
+
+    const logout = () => {
+        sessionStorage.removeItem('userToken');
+        sessionStorage.removeItem('userData');
+        setToken(null);
+        setUser(null);
+    };
+
+    return (
+        <UserAuthContext.Provider value={{ user, token, signup, login, logout, isLoggedIn: !!token }}>
+            {children}
+        </UserAuthContext.Provider>
+    );
+}
+
+export const useUserAuth = () => useContext(UserAuthContext);
+</file>
+
+<file path="frontend/src/pages/Admin.jsx">
+import { useState } from 'react';
+import axios from 'axios';
+import { UploadCloud, CheckCircle2, AlertCircle, Loader2, LogOut, FileText } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
+export default function Admin() {
+  const [file, setFile] = useState(null);
+  const [status, setStatus] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+      setStatus(null);
+    }
+  };
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      logout();
+      navigate('/admin-login');
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    setIsUploading(true);
+    setStatus(null);
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/upload/csv`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      setStatus({ type: 'success', message: `Successfully uploaded ${response.data.count} mobile devices.` });
+      setFile(null);
+    } catch (error) {
+      setStatus({ type: 'error', message: error.response?.data?.error || 'Failed to upload CSV.' });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0f0f0f", color: "white", fontFamily: "'Inter', sans-serif", padding: "1.5rem" }}>
+      
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+        <div>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>Database Admin</h1>
+          <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.8rem", margin: "0.25rem 0 0" }}>Manage mobile phone data</p>
+        </div>
+        <button onClick={handleLogout} style={{
+          display: "flex", alignItems: "center", gap: "0.5rem",
+          background: "rgba(239,68,68,0.08)", color: "#f87171",
+          border: "1px solid rgba(239,68,68,0.2)",
+          padding: "0.6rem 1rem", borderRadius: "10px",
+          cursor: "pointer", fontSize: "0.875rem", fontWeight: 500
+        }}>
+          <LogOut size={16} /> Logout
+        </button>
+      </div>
+
+      {/* Upload Card */}
+      <div style={{
+        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: "20px", padding: "2rem",
+        maxWidth: "480px", margin: "0 auto"
+      }}>
+        {/* Icon */}
+        <div style={{
+          width: "64px", height: "64px",
+          background: "rgba(99,102,241,0.1)",
+          border: "1px solid rgba(99,102,241,0.2)",
+          borderRadius: "16px",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          margin: "0 auto 1.25rem"
+        }}>
+          <UploadCloud size={32} color="#818cf8" />
+        </div>
+
+        <h3 style={{ textAlign: "center", fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem" }}>Upload Mobile Data</h3>
+        <p style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginBottom: "1.5rem", lineHeight: 1.5 }}>
+          Update the AI's knowledge base by uploading a CSV file containing mobile specifications.
+        </p>
+
+        {/* File Input */}
+        <label style={{
+          display: "flex", alignItems: "center", gap: "0.75rem",
+          background: "rgba(255,255,255,0.04)",
+          border: `1px solid ${file ? "rgba(99,102,241,0.4)" : "rgba(255,255,255,0.1)"}`,
+          borderRadius: "12px", padding: "0.875rem 1rem",
+          cursor: "pointer", marginBottom: "1rem",
+          transition: "all 0.2s", width: "100%", boxSizing: "border-box"
+        }}>
+          <input type="file" accept=".csv" onChange={handleFileChange} style={{ display: "none" }} />
+          <div style={{
+            width: "36px", height: "36px", flexShrink: 0,
+            background: file ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.05)",
+            borderRadius: "8px",
+            display: "flex", alignItems: "center", justifyContent: "center"
+          }}>
+            <FileText size={18} color={file ? "#818cf8" : "rgba(255,255,255,0.3)"} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontSize: "0.875rem", fontWeight: 500,
+              color: file ? "white" : "rgba(255,255,255,0.4)",
+              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
+            }}>
+              {file ? file.name : "Choose CSV File"}
+            </div>
+            <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.25)", marginTop: "2px" }}>
+              {file ? `${(file.size / 1024).toFixed(1)} KB` : "Supports .csv files"}
+            </div>
+          </div>
+        </label>
+
+        {/* Upload Button */}
+        <button onClick={handleUpload} disabled={!file || isUploading}
+          style={{
+            width: "100%", padding: "0.875rem",
+            background: file && !isUploading ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.06)",
+            border: "none", borderRadius: "12px",
+            color: file && !isUploading ? "white" : "rgba(255,255,255,0.3)",
+            fontSize: "0.95rem", fontWeight: 600,
+            cursor: file && !isUploading ? "pointer" : "not-allowed",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
+            boxShadow: file && !isUploading ? "0 4px 15px rgba(99,102,241,0.3)" : "none",
+            transition: "all 0.2s"
+          }}>
+          {isUploading ? (
+            <><Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> Uploading...</>
+          ) : (
+            <><UploadCloud size={18} /> Upload to Database</>
+          )}
+        </button>
+
+        {/* Status */}
+        {status && (
+          <div style={{
+            marginTop: "1rem", padding: "0.875rem 1rem",
+            borderRadius: "10px", display: "flex", alignItems: "flex-start", gap: "0.75rem",
+            background: status.type === 'success' ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)",
+            border: `1px solid ${status.type === 'success' ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)"}`,
+            color: status.type === 'success' ? "#34d399" : "#f87171",
+            fontSize: "0.85rem", lineHeight: 1.5
+          }}>
+            {status.type === 'success' ? <CheckCircle2 size={18} style={{ flexShrink: 0, marginTop: "1px" }} /> : <AlertCircle size={18} style={{ flexShrink: 0, marginTop: "1px" }} />}
+            {status.message}
+          </div>
+        )}
+      </div>
+
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/pages/UserLogin.jsx">
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Loader2, Eye, EyeOff, User, Mail, Lock, ArrowLeft } from "lucide-react";
+import { useUserAuth } from "../context/UserAuthContext";
+
+export default function UserLogin() {
+    const [isSignup, setIsSignup] = useState(false);
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [error, setError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const navigate = useNavigate();
+    const { login, signup } = useUserAuth();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+        if (isSignup && !name.trim()) { setError("Name is required"); return; }
+        if (!email.trim() || !password.trim()) { setError("Email and password required"); return; }
+
+        setIsSubmitting(true);
+        try {
+            if (isSignup) {
+                await signup(name, email, password);
+            } else {
+                await login(email, password);
+            }
+            navigate('/user-upload');
+        } catch (err) {
+            setError(err.response?.data?.error || "Something went wrong");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div style={{
+            minHeight: "100vh",
+            background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontFamily: "'Inter', sans-serif", padding: "1rem"
+        }}>
+            <button onClick={() => navigate('/')} style={{
+                position: "fixed", top: "1.5rem", left: "1.5rem",
+                background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "10px", padding: "0.6rem", color: "white", cursor: "pointer", display: "flex"
+            }}>
+                <ArrowLeft size={18} />
+            </button>
+
+            <div style={{
+                width: "100%", maxWidth: "420px",
+                background: "rgba(15,23,42,0.8)", backdropFilter: "blur(20px)",
+                border: "1px solid rgba(255,255,255,0.08)", borderRadius: "24px",
+                padding: "2.5rem 2rem", boxShadow: "0 25px 50px rgba(0,0,0,0.5)"
+            }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2rem" }}>
+                    <div style={{
+                        width: "64px", height: "64px",
+                        background: "linear-gradient(135deg, #10b981, #059669)",
+                        borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center",
+                        marginBottom: "1rem", boxShadow: "0 8px 24px rgba(16,185,129,0.4)"
+                    }}>
+                        <User size={32} color="white" />
+                    </div>
+                    <h1 style={{ color: "white", fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>
+                        {isSignup ? "Create Account" : "Welcome Back"}
+                    </h1>
+                    <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+                        Upload phone data to MobileAssist AI
+                    </p>
+                </div>
+
+                <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    {isSignup && (
+                        <div style={{ position: "relative" }}>
+                            <User size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)" }} />
+                            <input type="text" placeholder="Full Name" value={name} onChange={(e) => setName(e.target.value)}
+                                style={{ width: "100%", padding: "0.875rem 1rem 0.875rem 2.75rem", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "white", fontSize: "0.95rem", outline: "none", boxSizing: "border-box" }} />
+                        </div>
+                    )}
+
+                    <div style={{ position: "relative" }}>
+                        <Mail size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)" }} />
+                        <input type="email" placeholder="Email address" value={email} onChange={(e) => setEmail(e.target.value)}
+                            style={{ width: "100%", padding: "0.875rem 1rem 0.875rem 2.75rem", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "white", fontSize: "0.95rem", outline: "none", boxSizing: "border-box" }} />
+                    </div>
+
+                    <div style={{ position: "relative" }}>
+                        <Lock size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)" }} />
+                        <input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}
+                            style={{ width: "100%", padding: "0.875rem 3rem 0.875rem 2.75rem", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px", color: "white", fontSize: "0.95rem", outline: "none", boxSizing: "border-box" }} />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: "absolute", right: "1rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer" }}>
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
+
+                    {error && (
+                        <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", padding: "0.75rem 1rem", borderRadius: "10px", fontSize: "0.875rem" }}>
+                            {error}
+                        </div>
+                    )}
+
+                    <button type="submit" disabled={isSubmitting} style={{
+                        width: "100%", padding: "0.875rem",
+                        background: "linear-gradient(135deg, #10b981, #059669)",
+                        border: "none", borderRadius: "12px", color: "white", fontSize: "1rem", fontWeight: 600,
+                        cursor: isSubmitting ? "not-allowed" : "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
+                        boxShadow: "0 4px 15px rgba(16,185,129,0.4)", opacity: isSubmitting ? 0.7 : 1, marginTop: "0.5rem"
+                    }}>
+                        {isSubmitting ? <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} /> : (isSignup ? "Sign Up" : "Sign In")}
+                    </button>
+                </form>
+
+                <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
+                    <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.875rem" }}>
+                        {isSignup ? "Already have an account?" : "Don't have an account?"}
+                    </span>{" "}
+                    <span onClick={() => { setIsSignup(!isSignup); setError(""); }} style={{ color: "#34d399", fontSize: "0.875rem", cursor: "pointer", fontWeight: 600 }}>
+                        {isSignup ? "Sign In" : "Sign Up"}
+                    </span>
+                </div>
+            </div>
+
+            <style>{`
+                input::placeholder { color: rgba(255,255,255,0.25); }
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            `}</style>
+        </div>
+    );
+}
+</file>
+
+<file path="frontend/src/pages/UserUpload.jsx">
+import { useState } from 'react';
+import axios from 'axios';
+import { UploadCloud, CheckCircle2, AlertCircle, Loader2, LogOut, FileText } from 'lucide-react';
+import { useUserAuth } from '../context/UserAuthContext';
+import { useNavigate } from 'react-router-dom';
+
+export default function UserUpload() {
+    const [file, setFile] = useState(null);
+    const [status, setStatus] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const { user, token, logout } = useUserAuth();
+    const navigate = useNavigate();
+
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            setFile(e.target.files[0]);
+            setStatus(null);
+        }
+    };
+
+    const handleLogout = () => {
+        logout();
+        navigate('/user-login');
+    };
+
+    const handleUpload = async () => {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        setIsUploading(true);
+        setStatus(null);
+        try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/upload/csv-user`,
+                formData,
+                { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` } }
+            );
+            setStatus({ type: 'success', message: `Successfully uploaded ${response.data.count} mobile devices.` });
+            setFile(null);
+        } catch (error) {
+            setStatus({ type: 'error', message: error.response?.data?.error || 'Failed to upload CSV.' });
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    return (
+        <div style={{ minHeight: "100vh", background: "#0f0f0f", color: "white", fontFamily: "'Inter', sans-serif", padding: "1.5rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+                <div>
+                    <h1 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>User Upload Panel</h1>
+                    <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.8rem", margin: "0.25rem 0 0" }}>Welcome, {user?.name}</p>
+                </div>
+                <button onClick={handleLogout} style={{
+                    display: "flex", alignItems: "center", gap: "0.5rem",
+                    background: "rgba(239,68,68,0.08)", color: "#f87171",
+                    border: "1px solid rgba(239,68,68,0.2)", padding: "0.6rem 1rem", borderRadius: "10px",
+                    cursor: "pointer", fontSize: "0.875rem", fontWeight: 500
+                }}>
+                    <LogOut size={16} /> Logout
+                </button>
+            </div>
+
+            <div style={{
+                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: "20px", padding: "2rem", maxWidth: "480px", margin: "0 auto"
+            }}>
+                <div style={{
+                    width: "64px", height: "64px", background: "rgba(16,185,129,0.1)",
+                    border: "1px solid rgba(16,185,129,0.2)", borderRadius: "16px",
+                    display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1.25rem"
+                }}>
+                    <UploadCloud size={32} color="#34d399" />
+                </div>
+
+                <h3 style={{ textAlign: "center", fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem" }}>Upload Mobile Data</h3>
+                <p style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginBottom: "1.5rem", lineHeight: 1.5 }}>
+                    Add new mobile specifications to the AI's knowledge base.
+                </p>
+
+                <label style={{
+                    display: "flex", alignItems: "center", gap: "0.75rem",
+                    background: "rgba(255,255,255,0.04)",
+                    border: `1px solid ${file ? "rgba(16,185,129,0.4)" : "rgba(255,255,255,0.1)"}`,
+                    borderRadius: "12px", padding: "0.875rem 1rem", cursor: "pointer", marginBottom: "1rem",
+                    width: "100%", boxSizing: "border-box"
+                }}>
+                    <input type="file" accept=".csv" onChange={handleFileChange} style={{ display: "none" }} />
+                    <div style={{
+                        width: "36px", height: "36px", flexShrink: 0,
+                        background: file ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.05)",
+                        borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center"
+                    }}>
+                        <FileText size={18} color={file ? "#34d399" : "rgba(255,255,255,0.3)"} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: "0.875rem", fontWeight: 500, color: file ? "white" : "rgba(255,255,255,0.4)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {file ? file.name : "Choose CSV File"}
+                        </div>
+                        <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.25)", marginTop: "2px" }}>
+                            {file ? `${(file.size / 1024).toFixed(1)} KB` : "Supports .csv files"}
+                        </div>
+                    </div>
+                </label>
+
+                <button onClick={handleUpload} disabled={!file || isUploading} style={{
+                    width: "100%", padding: "0.875rem",
+                    background: file && !isUploading ? "linear-gradient(135deg, #10b981, #059669)" : "rgba(255,255,255,0.06)",
+                    border: "none", borderRadius: "12px", color: file && !isUploading ? "white" : "rgba(255,255,255,0.3)",
+                    fontSize: "0.95rem", fontWeight: 600, cursor: file && !isUploading ? "pointer" : "not-allowed",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
+                    boxShadow: file && !isUploading ? "0 4px 15px rgba(16,185,129,0.3)" : "none"
+                }}>
+                    {isUploading ? <><Loader2 size={18} style={{ animation: "spin 1s linear infinite" }} /> Uploading...</> : <><UploadCloud size={18} /> Upload to Database</>}
+                </button>
+
+                {status && (
+                    <div style={{
+                        marginTop: "1rem", padding: "0.875rem 1rem", borderRadius: "10px",
+                        display: "flex", alignItems: "flex-start", gap: "0.75rem",
+                        background: status.type === 'success' ? "rgba(16,185,129,0.08)" : "rgba(239,68,68,0.08)",
+                        border: `1px solid ${status.type === 'success' ? "rgba(16,185,129,0.2)" : "rgba(239,68,68,0.2)"}`,
+                        color: status.type === 'success' ? "#34d399" : "#f87171", fontSize: "0.85rem", lineHeight: 1.5
+                    }}>
+                        {status.type === 'success' ? <CheckCircle2 size={18} style={{ flexShrink: 0, marginTop: "1px" }} /> : <AlertCircle size={18} style={{ flexShrink: 0, marginTop: "1px" }} />}
+                        {status.message}
+                    </div>
+                )}
+            </div>
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+        </div>
+    );
+}
+</file>
+
+<file path="frontend/src/main.jsx">
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import './index.css'
+import { BrowserRouter } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
+  </React.StrictMode>,
+)
+</file>
+
+<file path="frontend/index.html">
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0f0f0f" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <title>MobileAssist AI v2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { background: #0f0f0f; color: white; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
+      #root { height: 100vh; display: flex; flex-direction: column; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="frontend/package.json">
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "framer-motion": "^12.40.0",
+    "lucide-react": "^0.292.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^6.20.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.0",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.14",
+    "tailwindcss": "^4.3.0",
+    "vite": "^5.0.0",
+    "vite-plugin-pwa": "^1.3.0"
+  }
+}
+</file>
+
+<file path="backend/server.js">
+require('dotenv').config();
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const uploadRoutes = require('./routes/upload');
+const chatRoutes = require('./routes/chat');
+const userAuthRoutes = require('./routes/userAuth');
+
+const app = express();
+
+app.use(cors());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+app.use('/api/upload', uploadRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/user', userAuthRoutes);
+
+const PORT = process.env.PORT || 5000;
+mongoose.connect(process.env.MONGODB_URI)
+.then(() => {
+  console.log("MongoDB Connected");
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+})
+.catch(err => console.log(err));
+</file>
+
+<file path="frontend/src/components/chat/ChatMessage.jsx">
+import React from 'react';
+import { Bot, User, Star } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+
+export default function ChatMessage({ msg, saveFavorite }) {
+    const saveAIResponse = () => {
+        let favorites = JSON.parse(localStorage.getItem("aiFavorites")) || [];
+        const exists = favorites.find(f => f.content === msg.content);
+        if (exists) {
+            alert("Already saved!");
+            return;
+        }
+        favorites.push({ content: msg.content, savedAt: new Date().toISOString() });
+        localStorage.setItem("aiFavorites", JSON.stringify(favorites));
+        alert("✅ Saved to favorites!");
+    };
+
+    return (
+        <div className={`message ${msg.role === 'user' ? 'user' : ''}`} style={{ alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start', display: "flex", gap: "1rem", maxWidth: "85%", flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
+            <div className="avatar" style={{ flexShrink: 0 }}>
+                {msg.role === "bot" ? <Bot size={20} color="white" /> : <User size={20} color="white" />}
+            </div>
+
+            <div className="bubble" style={{ position: "relative" }}>
+                {msg.image && (
+                    <div style={{ marginBottom: "0.75rem" }}>
+                        <img
+                            src={msg.image}
+                            alt="Uploaded attachment"
+                            style={{ maxWidth: "240px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 4px 6px rgba(0,0,0,0.2)" }}
+                        />
+                    </div>
+                )}
+
+                {msg.content && (
+                    <div style={{ lineHeight: 1.6 }}>
+                        <ReactMarkdown
+                            components={{
+                                p: ({ children }) => <p style={{ margin: "0.4rem 0" }}>{children}</p>,
+                                strong: ({ children }) => <strong style={{ color: "#a5b4fc", fontWeight: 700 }}>{children}</strong>,
+                                ul: ({ children }) => <ul style={{ paddingLeft: "1.2rem", margin: "0.4rem 0" }}>{children}</ul>,
+                                ol: ({ children }) => <ol style={{ paddingLeft: "1.2rem", margin: "0.4rem 0" }}>{children}</ol>,
+                                li: ({ children }) => <li style={{ margin: "0.2rem 0" }}>{children}</li>,
+                                h1: ({ children }) => <h1 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#a5b4fc", margin: "0.5rem 0" }}>{children}</h1>,
+                                h2: ({ children }) => <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a5b4fc", margin: "0.5rem 0" }}>{children}</h2>,
+                                h3: ({ children }) => <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#a5b4fc", margin: "0.4rem 0" }}>{children}</h3>,
+                                code: ({ children }) => <code style={{ background: "rgba(0,0,0,0.3)", padding: "0.1rem 0.4rem", borderRadius: "4px", fontSize: "0.9em" }}>{children}</code>,
+                                hr: () => <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.1)", margin: "0.5rem 0" }} />,
+                            }}
+                        >
+                            {msg.content}
+                        </ReactMarkdown>
+                    </div>
+                )}
+
+                {/* Single Phone Result - DB */}
+                {msg.phone && !msg.phones?.length && (
+                    <Star
+                        size={20}
+                        onClick={() => saveFavorite(msg.phone)}
+                        style={{ position: "absolute", top: "10px", right: "10px", cursor: "pointer", color: "#fbbf24" }}
+                    />
+                )}
+
+                {/* Save AI response button */}
+                {msg.role === "bot" && !msg.phone && !msg.phones?.length && msg.content && (
+                    <div
+                        onClick={saveAIResponse}
+                        style={{
+                            display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                            marginTop: "0.75rem", cursor: "pointer",
+                            color: "#fbbf24", fontSize: "0.8rem", fontWeight: 600,
+                            background: "rgba(251,191,36,0.1)", padding: "0.3rem 0.75rem",
+                            borderRadius: "20px", border: "1px solid rgba(251,191,36,0.2)",
+                            transition: "all 0.2s"
+                        }}
+                    >
+                        <Star size={14} /> Save
+                    </div>
+                )}
+
+                {/* Comparison Result */}
+                {msg.phones?.length > 0 && (
+                    <div style={{ marginTop: "1rem", paddingTop: "0.5rem", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                        {msg.phones.map((p, i) => (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "rgba(0,0,0,0.2)", padding: "0.5rem 0.75rem", borderRadius: "8px", marginBottom: "0.5rem" }}>
+                                <span style={{ fontWeight: 600, color: "#a5b4fc" }}>{p.model}</span>
+                                <Star
+                                    size={16}
+                                    onClick={() => saveFavorite(p)}
+                                    style={{ cursor: "pointer", color: "#fbbf24", marginLeft: "auto" }}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+</file>
+
+<file path="frontend/src/components/chat/ImageUpload.jsx">
+import React, { useRef, useState } from 'react';
+import { Plus, X, Camera, Image } from 'lucide-react';
+
+export default function ImageUpload({ selectedImage, onImageSelect, onImageRemove }) {
+    const fileInputRef = useRef(null);
+    const cameraInputRef = useRef(null);
+    const [showMenu, setShowMenu] = useState(false);
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                if (file.size <= 5 * 1024 * 1024) {
+                    onImageSelect(file);
+                } else {
+                    alert("File size should be less than 5MB");
+                }
+            } else {
+                alert("Only JPG, PNG and WEBP formats are supported");
+            }
+        }
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        if (cameraInputRef.current) cameraInputRef.current.value = "";
+        setShowMenu(false);
+    };
+
+    return (
+        <div style={{ position: 'relative' }}>
+            {/* Hidden inputs */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: 'none' }}
+            />
+            <input
+                type="file"
+                ref={cameraInputRef}
+                onChange={handleFileChange}
+                accept="image/jpeg,image/png,image/webp"
+                capture="environment"
+                style={{ display: 'none' }}
+            />
+
+            {/* + Button */}
+            <button
+                type="button"
+                onClick={() => setShowMenu(!showMenu)}
+                style={{
+                    width: "40px", height: "40px",
+                    background: showMenu ? "rgba(99,102,241,0.4)" : "rgba(99,102,241,0.2)",
+                    color: "#818cf8",
+                    border: "1px solid rgba(99,102,241,0.3)",
+                    borderRadius: "50%",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer",
+                    fontSize: "1.4rem", fontWeight: 300,
+                    transition: "all 0.2s",
+                    transform: showMenu ? "rotate(45deg)" : "rotate(0deg)"
+                }}
+            >
+                <Plus size={20} />
+            </button>
+
+            {/* Popup Menu */}
+            {showMenu && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: '110%',
+                    left: '0',
+                    background: 'rgba(15, 23, 42, 0.98)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '12px',
+                    padding: '0.5rem',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                    zIndex: 100,
+                    minWidth: '160px'
+                }}>
+                    {/* Camera Option */}
+                    <button
+                        type="button"
+                        onClick={() => { cameraInputRef.current?.click(); setShowMenu(false); }}
+                        style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
+                            padding: '0.65rem 0.75rem', background: 'none', border: 'none',
+                            color: 'white', cursor: 'pointer', borderRadius: '8px',
+                            fontSize: '0.9rem', fontWeight: 500,
+                            transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                    >
+                        <div style={{ width: '32px', height: '32px', background: 'rgba(16,185,129,0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Camera size={16} color="#34d399" />
+                        </div>
+                        Camera
+                    </button>
+
+                    {/* Gallery Option */}
+                    <button
+                        type="button"
+                        onClick={() => { fileInputRef.current?.click(); setShowMenu(false); }}
+                        style={{
+                            width: '100%', display: 'flex', alignItems: 'center', gap: '0.75rem',
+                            padding: '0.65rem 0.75rem', background: 'none', border: 'none',
+                            color: 'white', cursor: 'pointer', borderRadius: '8px',
+                            fontSize: '0.9rem', fontWeight: 500,
+                            transition: 'background 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                    >
+                        <div style={{ width: '32px', height: '32px', background: 'rgba(99,102,241,0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Image size={16} color="#818cf8" />
+                        </div>
+                        Gallery
+                    </button>
+                </div>
+            )}
+
+            {/* Image Preview */}
+            {selectedImage && (
+                <div style={{
+                    position: 'absolute', bottom: '110%', left: '0',
+                    marginBottom: '0.5rem',
+                    background: 'rgba(30, 41, 59, 0.95)',
+                    padding: '0.75rem', borderRadius: '0.75rem',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)',
+                    zIndex: 50
+                }}>
+                    <div style={{ position: 'relative' }}>
+                        <img
+                            src={URL.createObjectURL(selectedImage)}
+                            alt="Preview"
+                            style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '0.5rem' }}
+                        />
+                        <button
+                            type="button"
+                            onClick={onImageRemove}
+                            style={{
+                                position: 'absolute', top: '-8px', right: '-8px',
+                                background: '#ef4444', color: 'white', border: 'none',
+                                borderRadius: '50%', width: '24px', height: '24px',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+</file>
+
+<file path="frontend/src/pages/AdminLogin.jsx">
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Loader2, Eye, EyeOff, ShieldCheck, Mail, Lock, ArrowLeft } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import axios from "axios";
+
+export default function AdminLogin() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [forgotMsg, setForgotMsg] = useState("");
+  const [forgotError, setForgotError] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (!username.trim() || !password.trim()) {
+      setError("Please enter both username and password.");
+      return;
+    }
+    setError("");
+    setIsSubmitting(true);
+    try {
+      await login(username, password, false);
+      navigate("/admin");
+    } catch (err) {
+      setError("Wrong username or password.");
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    if (!forgotEmail.trim()) { setForgotError("Please enter your email."); return; }
+    setForgotLoading(true); setForgotError("");
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/send-otp`, { email: forgotEmail });
+      setOtpSent(true);
+      setForgotMsg("OTP sent! Check your inbox.");
+    } catch (err) { setForgotError(err.response?.data?.error || "Failed to send OTP."); }
+    setForgotLoading(false);
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp.trim()) { setForgotError("Please enter the OTP."); return; }
+    setForgotLoading(true); setForgotError("");
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/verify-otp`, { email: forgotEmail, otp });
+      setOtpVerified(true);
+      setForgotMsg("✅ Identity verified! Your password is: admin123");
+    } catch (err) { setForgotError(err.response?.data?.error || "Invalid OTP."); }
+    setForgotLoading(false);
+  };
+
+  const resetForgot = () => { setShowForgot(false); setOtpSent(false); setOtpVerified(false); setForgotMsg(""); setForgotError(""); setForgotEmail(""); setOtp(""); };
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontFamily: "'Inter', sans-serif",
+      padding: "1rem"
+    }}>
+      {/* Glowing background circles */}
+      <div style={{ position: "fixed", top: "10%", left: "10%", width: "300px", height: "300px", background: "radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
+      <div style={{ position: "fixed", bottom: "10%", right: "10%", width: "250px", height: "250px", background: "radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)", borderRadius: "50%", pointerEvents: "none" }} />
+
+      <div style={{
+        width: "100%",
+        maxWidth: "420px",
+        background: "rgba(15, 23, 42, 0.8)",
+        backdropFilter: "blur(20px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: "24px",
+        padding: "2.5rem 2rem",
+        boxShadow: "0 25px 50px rgba(0,0,0,0.5)"
+      }}>
+
+        {!showForgot ? (
+          <>
+            {/* Logo */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2rem" }}>
+              <div style={{
+                width: "64px", height: "64px",
+                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                borderRadius: "16px",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                marginBottom: "1rem",
+                boxShadow: "0 8px 24px rgba(99,102,241,0.4)"
+              }}>
+                <ShieldCheck size={32} color="white" />
+              </div>
+              <h1 style={{ color: "white", fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>Admin Portal</h1>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.875rem", marginTop: "0.25rem" }}>MobileAssist AI Dashboard</p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {/* Username */}
+              <div style={{ position: "relative" }}>
+                <div style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)" }}>
+                  <Lock size={18} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  disabled={isSubmitting}
+                  style={{
+                    width: "100%", padding: "0.875rem 1rem 0.875rem 2.75rem",
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "12px", color: "white", fontSize: "0.95rem",
+                    outline: "none", boxSizing: "border-box",
+                    transition: "border-color 0.2s"
+                  }}
+                  onFocus={e => e.target.style.borderColor = "rgba(99,102,241,0.6)"}
+                  onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
+                />
+              </div>
+
+              {/* Password */}
+              <div style={{ position: "relative" }}>
+                <div style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)" }}>
+                  <Lock size={18} />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isSubmitting}
+                  style={{
+                    width: "100%", padding: "0.875rem 3rem 0.875rem 2.75rem",
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "12px", color: "white", fontSize: "0.95rem",
+                    outline: "none", boxSizing: "border-box"
+                  }}
+                  onFocus={e => e.target.style.borderColor = "rgba(99,102,241,0.6)"}
+                  onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.1)"}
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  style={{ position: "absolute", right: "1rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer" }}>
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", padding: "0.75rem 1rem", borderRadius: "10px", fontSize: "0.875rem" }}>
+                  {error}
+                </div>
+              )}
+
+              {/* Submit */}
+              <button type="submit" disabled={isSubmitting} style={{
+                width: "100%", padding: "0.875rem",
+                background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                border: "none", borderRadius: "12px",
+                color: "white", fontSize: "1rem", fontWeight: 600,
+                cursor: isSubmitting ? "not-allowed" : "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
+                boxShadow: "0 4px 15px rgba(99,102,241,0.4)",
+                opacity: isSubmitting ? 0.7 : 1,
+                marginTop: "0.5rem"
+              }}>
+                {isSubmitting ? <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} /> : "Sign In"}
+              </button>
+            </form>
+
+            {/* Forgot */}
+            <div style={{ textAlign: "center", marginTop: "1.5rem" }}>
+              <span onClick={() => setShowForgot(true)} style={{ color: "#818cf8", fontSize: "0.875rem", cursor: "pointer", textDecoration: "underline" }}>
+                Forgot password?
+              </span>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Forgot Password */}
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.5rem" }}>
+              <button onClick={resetForgot} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", padding: "0.5rem", cursor: "pointer", color: "white", display: "flex" }}>
+                <ArrowLeft size={18} />
+              </button>
+              <h2 style={{ color: "white", fontSize: "1.25rem", fontWeight: 700, margin: 0 }}>Reset Password</h2>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {!otpSent ? (
+                <>
+                  <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.875rem", margin: 0 }}>Enter your admin email to receive an OTP.</p>
+                  <div style={{ position: "relative" }}>
+                    <div style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)" }}>
+                      <Mail size={18} />
+                    </div>
+                    <input
+                      type="email"
+                      placeholder="Admin email address"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      style={{
+                        width: "100%", padding: "0.875rem 1rem 0.875rem 2.75rem",
+                        background: "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        borderRadius: "12px", color: "white", fontSize: "0.95rem",
+                        outline: "none", boxSizing: "border-box"
+                      }}
+                    />
+                  </div>
+                  <button onClick={handleSendOtp} disabled={forgotLoading} style={{
+                    width: "100%", padding: "0.875rem",
+                    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                    border: "none", borderRadius: "12px",
+                    color: "white", fontSize: "1rem", fontWeight: 600, cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center"
+                  }}>
+                    {forgotLoading ? <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} /> : "Send OTP"}
+                  </button>
+                </>
+              ) : !otpVerified ? (
+                <>
+                  <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399", padding: "0.75rem 1rem", borderRadius: "10px", fontSize: "0.875rem", textAlign: "center" }}>
+                    {forgotMsg}
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Enter 6-digit OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    maxLength={6}
+                    style={{
+                      width: "100%", padding: "0.875rem",
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      borderRadius: "12px", color: "white", fontSize: "1.5rem",
+                      fontWeight: 700, letterSpacing: "0.5rem",
+                      textAlign: "center", outline: "none", boxSizing: "border-box"
+                    }}
+                  />
+                  <button onClick={handleVerifyOtp} disabled={forgotLoading} style={{
+                    width: "100%", padding: "0.875rem",
+                    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                    border: "none", borderRadius: "12px",
+                    color: "white", fontSize: "1rem", fontWeight: 600, cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center"
+                  }}>
+                    {forgotLoading ? <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} /> : "Verify OTP"}
+                  </button>
+                </>
+              ) : (
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>✅</div>
+                  <div style={{ background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.3)", color: "#34d399", padding: "1rem", borderRadius: "12px", fontSize: "0.95rem", marginBottom: "1rem" }}>
+                    {forgotMsg}
+                  </div>
+                  <button onClick={resetForgot} style={{
+                    width: "100%", padding: "0.875rem",
+                    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                    border: "none", borderRadius: "12px",
+                    color: "white", fontSize: "1rem", fontWeight: 600, cursor: "pointer"
+                  }}>
+                    Back to Login
+                  </button>
+                </div>
+              )}
+
+              {forgotError && (
+                <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#f87171", padding: "0.75rem 1rem", borderRadius: "10px", fontSize: "0.875rem", textAlign: "center" }}>
+                  {forgotError}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      <style>{`
+        input::placeholder { color: rgba(255,255,255,0.25); }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
+    </div>
+  );
+}
+</file>
+
+<file path="frontend/src/App.jsx">
+import { Routes, Route } from 'react-router-dom'
+import Chat from './pages/Chat'
+import Admin from './pages/Admin'
+import AdminLogin from './pages/AdminLogin'
+import ProtectedRoute from './components/ProtectedRoute'
+import Favorites from "./pages/Favorites"
+import UserLogin from './pages/UserLogin'
+import UserUpload from './pages/UserUpload'
+import UserProtectedRoute from './components/UserProtectedRoute'
+import { UserAuthProvider } from './context/UserAuthContext'
+
+function App() {
+  return (
+    <UserAuthProvider>
+      <div style={{ height: "100vh", overflow: "hidden" }}>
+        <Routes>
+          <Route path="/" element={<Chat />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/user-login" element={<UserLogin />} />
+          <Route
+            path="/user-upload"
+            element={
+              <UserProtectedRoute>
+                <UserUpload />
+              </UserProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </div>
+    </UserAuthProvider>
+  )
+}
+
+export default App
+</file>
+
+<file path="frontend/vite.config.js">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [
+    react()
+  ],
+  server: {
+    open: true
+  }
+})
+</file>
+
+<file path="backend/package.json">
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^1.44.0",
+    "@google/generative-ai": "^0.24.1",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "csv-parser": "^3.2.0",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "groq-sdk": "^1.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.2.4",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.11"
+  }
+}
+</file>
+
+<file path="frontend/src/components/chat/Sidebar.jsx">
+import { useState } from 'react';
+import { Search, Trash2, X, Plus, Star, Database, MessageSquare, Upload } from 'lucide-react';
+import HistoryItem from './HistoryItem';
+import { useNavigate } from 'react-router-dom';
+
+export default function Sidebar({
+    chatHistory, currentChatId, createNewChat, switchChat,
+    deleteChat, renameChat, clearAllHistory, isOpen, setIsOpen
+}) {
+    const [searchTerm, setSearchTerm] = useState("");
+    const navigate = useNavigate();
+
+    const filteredHistory = chatHistory.filter(chat => {
+        const titleMatch = chat.title?.toLowerCase().includes(searchTerm.toLowerCase());
+        const msgMatch = chat.messages?.some(m => m.content?.toLowerCase().includes(searchTerm.toLowerCase()));
+        return titleMatch || msgMatch;
+    });
+
+    return (
+        <div style={{
+            position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 50,
+            width: "280px",
+            background: "#111111",
+            borderRight: "1px solid rgba(255,255,255,0.06)",
+            display: "flex", flexDirection: "column",
+            transform: isOpen ? "translateX(0)" : "translateX(-100%)",
+            transition: "transform 0.3s cubic-bezier(0.4,0,0.2,1)",
+            padding: "1.25rem"
+        }}>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.5rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                    <div style={{ width: "28px", height: "28px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <MessageSquare size={14} color="white" />
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "white" }}>MobileAssist AI</span>
+                </div>
+                <button onClick={() => setIsOpen(false)} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", padding: "0.4rem", borderRadius: "8px", display: "flex" }}>
+                    <X size={16} />
+                </button>
+            </div>
+
+            {/* New Chat Button */}
+            <button onClick={() => { createNewChat(); setIsOpen(false); }}
+                style={{
+                    display: "flex", alignItems: "center", gap: "0.75rem",
+                    width: "100%", padding: "0.8rem 1rem",
+                    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                    border: "none", borderRadius: "12px",
+                    color: "white", cursor: "pointer",
+                    marginBottom: "1.25rem", fontWeight: 600,
+                    fontSize: "0.9rem", boxShadow: "0 4px 15px rgba(99,102,241,0.3)",
+                    transition: "all 0.2s"
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = "0.9"}
+                onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+            >
+                <Plus size={18} /> New Chat
+            </button>
+
+            {/* Search */}
+            <div style={{ position: "relative", marginBottom: "1.25rem" }}>
+                <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.25)" }} />
+                <input
+                    type="text"
+                    placeholder="Search chats..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={{ width: "100%", padding: "0.6rem 0.75rem 0.6rem 2.25rem", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", color: "white", fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }}
+                />
+            </div>
+
+            {/* Navigation Links */}
+            <div style={{ marginBottom: "1rem", borderBottom: "1px solid rgba(255,255,255,0.06)", paddingBottom: "1rem", display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+                <button onClick={() => { navigate('/favorites'); setIsOpen(false); }}
+                    style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.7rem 0.75rem", background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", borderRadius: "10px", fontSize: "0.875rem", fontWeight: 500, transition: "all 0.2s" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(251,191,36,0.08)"; e.currentTarget.style.color = "#fbbf24"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>
+                    <div style={{ width: "30px", height: "30px", background: "rgba(251,191,36,0.1)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Star size={15} color="#fbbf24" />
+                    </div>
+                    Favorite Phones
+                </button>
+
+                <button onClick={() => { navigate('/user-login'); setIsOpen(false); }}
+                    style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.7rem 0.75rem", background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", borderRadius: "10px", fontSize: "0.875rem", fontWeight: 500, transition: "all 0.2s" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(16,185,129,0.08)"; e.currentTarget.style.color = "#34d399"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>
+                    <div style={{ width: "30px", height: "30px", background: "rgba(16,185,129,0.1)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Upload size={15} color="#34d399" />
+                    </div>
+                    Upload Data (User)
+                </button>
+
+                <button onClick={() => { navigate('/admin-login'); setIsOpen(false); }}
+                    style={{ display: "flex", alignItems: "center", gap: "0.75rem", width: "100%", padding: "0.7rem 0.75rem", background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", borderRadius: "10px", fontSize: "0.875rem", fontWeight: 500, transition: "all 0.2s" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = "rgba(99,102,241,0.08)"; e.currentTarget.style.color = "#818cf8"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(255,255,255,0.6)"; }}>
+                    <div style={{ width: "30px", height: "30px", background: "rgba(99,102,241,0.1)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Database size={15} color="#818cf8" />
+                    </div>
+                    Database Admin
+                </button>
+            </div>
+
+            {/* Chat History */}
+            <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.25)", marginBottom: "0.5rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>Recent Chats</p>
+                {filteredHistory.length > 0 ? (
+                    filteredHistory.map(session => (
+                        <HistoryItem
+                            key={session.id}
+                            session={session}
+                            isActive={session.id === currentChatId}
+                            onSelect={(id) => { switchChat(id); setIsOpen(false); }}
+                            onDelete={deleteChat}
+                            onRename={renameChat}
+                            isCollapsed={false}
+                        />
+                    ))
+                ) : (
+                    <p style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.85rem", textAlign: "center", marginTop: "2rem" }}>
+                        {searchTerm ? "No matching chats" : "Start a new chat!"}
+                    </p>
+                )}
+            </div>
+
+            {/* Clear History */}
+            {chatHistory.length > 0 && (
+                <button onClick={() => { if (window.confirm("Delete all chat history?")) clearAllHistory(); }}
+                    style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", width: "100%", padding: "0.7rem", background: "rgba(239,68,68,0.06)", color: "#f87171", border: "1px solid rgba(239,68,68,0.12)", borderRadius: "10px", cursor: "pointer", marginTop: "1rem", fontSize: "0.85rem", fontWeight: 500 }}>
+                    <Trash2 size={14} /> Clear History
+                </button>
+            )}
+        </div>
+    );
+}
+</file>
+
+<file path="frontend/src/index.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #0f0f0f;
+    color: white;
+    line-height: 1.5;
+    overflow: hidden;
+}
+
+#root {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+/* Typing dot animation */
+@keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-8px); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.loader { animation: spin 1s linear infinite; }
+
+/* Message bubbles */
+.bubble {
+    background: rgba(255,255,255,0.06);
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.message.user .bubble {
+    background: rgba(99,102,241,0.15);
+    border-color: rgba(99,102,241,0.3);
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.message.user .avatar {
+    background: linear-gradient(135deg, #3b82f6, #2dd4bf);
+}
+
+/* Admin styles */
+:root {
+    --primary: #6366f1;
+    --bg-color: #0f0f0f;
+    --panel-bg: rgba(30,41,59,0.7);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border: rgba(255,255,255,0.1);
+    --success: #10b981;
+    --error: #ef4444;
+}
+
+.page { padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+.page-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 1.5rem; }
+
+.admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+
+.upload-card {
+    background: var(--panel-bg);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    border: 1px solid var(--border);
+    text-align: center;
+    backdrop-filter: blur(16px);
+}
+
+.upload-icon {
+    width: 80px; height: 80px;
+    background: rgba(99,102,241,0.1);
+    color: #a855f7;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 2rem;
+}
+
+.btn {
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    color: white; border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+}
+
+.btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.file-label {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    padding: 1rem 2rem; border-radius: 12px;
+    cursor: pointer; font-weight: 500;
+}
+
+.status-message {
+    margin-top: 2rem; padding: 1.25rem; border-radius: 12px;
+    background: rgba(16,185,129,0.1); color: var(--success);
+    border: 1px solid rgba(16,185,129,0.2);
+    display: flex; align-items: center; gap: 0.75rem;
+}
+
+.status-message.error {
+    background: rgba(239,68,68,0.1); color: var(--error);
+    border: 1px solid rgba(239,68,68,0.2);
+}
+
+.search-input {
+    width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 8px; color: white; outline: none;
+}
+
+.icon-btn {
+    background: transparent; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); padding: 0.5rem; border-radius: 8px;
+}
+
+.icon-btn:hover { color: white; background: rgba(255,255,255,0.1); }
+
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+input::placeholder { color: rgba(255,255,255,0.25); }
+</file>
+
+<file path="frontend/src/pages/Chat.jsx">
+import { useState, useRef, useEffect } from "react";
+import axios from "axios";
+import { Send, Bot, Mic, Star, Smartphone, GitCompare, DollarSign, Camera } from "lucide-react";
+import Sidebar from "../components/chat/Sidebar";
+import ImageUpload from "../components/chat/ImageUpload";
+import ChatMessage from "../components/chat/ChatMessage";
+import { convertToBase64 } from "../utils/VisionService";
+import { getHistory, saveHistory, createNewSession } from "../utils/storage";
+import FavoritesModal from "../components/chat/FavoritesModal";
+
+const SUGGESTIONS = [
+    { icon: <Smartphone size={20} />, text: "Best phones under ₹20,000", color: "#6366f1" },
+    { icon: <GitCompare size={20} />, text: "Compare iPhone 15 vs Samsung S24", color: "#10b981" },
+    { icon: <DollarSign size={20} />, text: "Top 5 flagship phones in India", color: "#f59e0b" },
+    { icon: <Camera size={20} />, text: "Best camera phones under ₹30,000", color: "#ec4899" },
+];
+
+export default function Chat() {
+    const initialMessage = {
+        role: "bot",
+        content: "Hi! I am your AI Mobile Assistant. I can help you find phones, compare models, or suggest the best device."
+    };
+
+    const [messages, setMessages] = useState([]);
+    const [input, setInput] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [chatHistory, setChatHistory] = useState([]);
+    const [currentChatId, setCurrentChatId] = useState(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isFavoritesOpen, setIsFavoritesOpen] = useState(false);
+
+    const messagesEndRef = useRef(null);
+    const recognitionRef = useRef(null);
+    const inputRef = useRef(null);
+
+    const isNewChat = messages.length <= 1;
+
+    useEffect(() => {
+        const history = getHistory();
+        setChatHistory(history);
+        if (history.length > 0) {
+            setCurrentChatId(history[0].id);
+            setMessages(history[0].messages);
+        } else {
+            createNewChat();
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!currentChatId || messages.length === 0) return;
+        setChatHistory(prev => {
+            const history = [...prev];
+            const chatIndex = history.findIndex(c => c.id === currentChatId);
+            let title = "New Chat";
+            if (messages.length > 1) {
+                title = messages[1].content.substring(0, 25) + (messages[1].content.length > 25 ? "..." : "");
+            }
+            if (chatIndex > -1) {
+                history[chatIndex].messages = messages;
+                if (history[chatIndex].title === "New Chat" && messages.length > 1) {
+                    history[chatIndex].title = title;
+                }
+                history[chatIndex].updatedAt = new Date().toISOString();
+            } else {
+                history.unshift({ id: currentChatId, title, messages, updatedAt: new Date().toISOString() });
+            }
+            saveHistory(history);
+            return history;
+        });
+    }, [messages, currentChatId]);
+
+    const createNewChat = () => {
+        const session = createNewSession(initialMessage);
+        setCurrentChatId(session.id);
+        setMessages(session.messages);
+    };
+
+    const switchChat = (id) => {
+        const session = chatHistory.find(c => c.id === id);
+        if (session) {
+            setCurrentChatId(session.id);
+            setMessages(session.messages);
+            setIsSidebarOpen(false);
+        }
+    };
+
+    const deleteChat = (id) => {
+        const updatedHistory = chatHistory.filter(c => c.id !== id);
+        setChatHistory(updatedHistory);
+        saveHistory(updatedHistory);
+        if (currentChatId === id) {
+            if (updatedHistory.length > 0) {
+                setCurrentChatId(updatedHistory[0].id);
+                setMessages(updatedHistory[0].messages);
+            } else {
+                createNewChat();
+            }
+        }
+    };
+
+    const renameChat = (id, newTitle) => {
+        setChatHistory(prev => {
+            const history = [...prev];
+            const chatIndex = history.findIndex(c => c.id === id);
+            if (chatIndex > -1) { history[chatIndex].title = newTitle; saveHistory(history); }
+            return history;
+        });
+    };
+
+    const clearAllHistory = () => {
+        setChatHistory([]);
+        saveHistory([]);
+        createNewChat();
+    };
+
+    const saveFavorite = (phone) => {
+        let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+        const exists = favorites.find(p => p._id === phone._id || p.model === phone.model);
+        if (!exists) {
+            favorites.push(phone);
+            localStorage.setItem("favorites", JSON.stringify(favorites));
+            alert("Phone added to favorites");
+        } else {
+            alert("Phone already in favorites");
+        }
+    };
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages, isLoading]);
+
+    const speak = (text) => {
+        const speech = new SpeechSynthesisUtterance(text);
+        speech.lang = "en-US";
+        window.speechSynthesis.speak(speech);
+    };
+
+    const sendMessage = async (messageText, imageFile = null) => {
+        if (!messageText.trim() && !imageFile) return;
+        let imageBase64 = null;
+        if (imageFile) {
+            try { imageBase64 = await convertToBase64(imageFile); } catch (err) { console.error(err); }
+        }
+        setMessages(prev => [...prev, { role: "user", content: messageText, image: imageBase64 }]);
+        setIsLoading(true);
+        try {
+            const response = await axios.post(
+                `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/chat`,
+                { message: messageText, image: imageBase64 }
+            );
+            const reply = response.data.reply;
+            setMessages(prev => [...prev, { role: "bot", content: reply, phone: response.data.phone || null, phones: response.data.phones || [] }]);
+            speak(reply);
+        } catch (error) {
+            setMessages(prev => [...prev, { role: "bot", content: "⚠ Error connecting to server." }]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if ((!input.trim() && !selectedImage) || isLoading) return;
+        const userMessage = input;
+        const currentImage = selectedImage;
+        setInput("");
+        setSelectedImage(null);
+        sendMessage(userMessage, currentImage);
+    };
+
+    const startRecording = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) { alert("Speech recognition not supported"); return; }
+        const recognition = new SpeechRecognition();
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+        recognition.onstart = () => setIsRecording(true);
+        recognition.onresult = (event) => {
+            const speechText = event.results[0][0].transcript;
+            setInput(speechText);
+            sendMessage(speechText);
+        };
+        recognition.onend = () => setIsRecording(false);
+        recognition.start();
+        recognitionRef.current = recognition;
+    };
+
+    const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
+    const handleDragLeave = (e) => { e.preventDefault(); setIsDragging(false); };
+    const handleDrop = (e) => {
+        e.preventDefault(); setIsDragging(false);
+        const file = e.dataTransfer.files[0];
+        if (file && ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            if (file.size <= 5 * 1024 * 1024) setSelectedImage(file);
+            else alert("File size should be less than 5MB");
+        }
+    };
+
+    return (
+        <div style={{ display: "flex", height: "100vh", background: "#0f0f0f", color: "white", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
+
+            {/* Sidebar */}
+            <Sidebar
+                chatHistory={chatHistory}
+                currentChatId={currentChatId}
+                createNewChat={createNewChat}
+                switchChat={switchChat}
+                deleteChat={deleteChat}
+                renameChat={renameChat}
+                clearAllHistory={clearAllHistory}
+                isOpen={isSidebarOpen}
+                setIsOpen={setIsSidebarOpen}
+            />
+
+            {/* Overlay for mobile */}
+            {isSidebarOpen && (
+                <div onClick={() => setIsSidebarOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 40 }} />
+            )}
+
+            {/* Main Area */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", position: "relative" }}
+                onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
+
+                {/* Top Bar */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                    <button onClick={() => setIsSidebarOpen(true)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", padding: "0.4rem", borderRadius: "8px" }}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                    </button>
+                    <span style={{ fontWeight: 600, fontSize: "1rem", color: "rgba(255,255,255,0.9)" }}>MobileAssist AI</span>
+                    <button onClick={() => setIsFavoritesOpen(true)} style={{ background: "none", border: "none", color: "#fbbf24", cursor: "pointer", padding: "0.4rem" }}>
+                        <Star size={20} />
+                    </button>
+                </div>
+
+                {/* Messages or Welcome Screen */}
+                <div style={{ flex: 1, overflowY: "auto", padding: "1rem" }}>
+                    {isNewChat ? (
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: "2rem 1rem" }}>
+                            {/* Logo */}
+                            <div style={{ width: "64px", height: "64px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1.5rem", boxShadow: "0 8px 32px rgba(99,102,241,0.3)" }}>
+                                <Smartphone size={32} color="white" />
+                            </div>
+                            <h1 style={{ fontSize: "1.75rem", fontWeight: 700, margin: "0 0 0.5rem", textAlign: "center" }}>MobileAssist AI</h1>
+                            <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "2rem", fontSize: "0.95rem" }}>Your smart mobile phone assistant</p>
+
+                            {/* Suggestion Cards */}
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", width: "100%", maxWidth: "480px" }}>
+                                {SUGGESTIONS.map((s, i) => (
+                                    <button key={i} onClick={() => { setInput(s.text); inputRef.current?.focus(); }}
+                                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "1rem", cursor: "pointer", textAlign: "left", color: "white", transition: "all 0.2s" }}
+                                        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
+                                        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                                    >
+                                        <div style={{ color: s.color, marginBottom: "0.5rem" }}>{s.icon}</div>
+                                        <div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.7)", lineHeight: 1.4 }}>{s.text}</div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", maxWidth: "720px", margin: "0 auto" }}>
+                            {messages.slice(1).map((msg, index) => (
+                                <ChatMessage key={index} msg={msg} saveFavorite={saveFavorite} />
+                            ))}
+                            {isLoading && (
+                                <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
+                                    <div style={{ width: "36px", height: "36px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                        <Bot size={18} color="white" />
+                                    </div>
+                                    <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "16px", padding: "1rem", display: "flex", gap: "4px", alignItems: "center" }}>
+                                        {[0,1,2].map(i => (
+                                            <div key={i} style={{ width: "8px", height: "8px", background: "#6366f1", borderRadius: "50%", animation: `bounce 1.2s ${i*0.2}s infinite` }} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            <div ref={messagesEndRef} />
+                        </div>
+                    )}
+                </div>
+
+                {/* Input Area */}
+                <div style={{ padding: "1rem", borderTop: "1px solid rgba(255,255,255,0.06)", background: "#0f0f0f" }}>
+                    <form onSubmit={handleSubmit} style={{ maxWidth: "720px", margin: "0 auto" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "8px 12px" }}>
+                            <ImageUpload selectedImage={selectedImage} onImageSelect={setSelectedImage} onImageRemove={() => setSelectedImage(null)} />
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                placeholder="Ask about phones..."
+                                disabled={isLoading}
+                                style={{ flex: 1, background: "none", border: "none", color: "white", fontSize: "0.95rem", outline: "none", padding: "0.4rem 0" }}
+                            />
+                            <button type="button" onClick={startRecording} style={{ background: "none", border: "none", color: isRecording ? "#ef4444" : "rgba(255,255,255,0.4)", cursor: "pointer", padding: "0.4rem", display: "flex" }}>
+                                <Mic size={20} />
+                            </button>
+                            <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading}
+                                style={{ width: "36px", height: "36px", background: (input.trim() || selectedImage) ? "#6366f1" : "rgba(255,255,255,0.1)", border: "none", borderRadius: "10px", color: "white", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "background 0.2s" }}>
+                                <Send size={16} />
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <FavoritesModal isOpen={isFavoritesOpen} onClose={() => setIsFavoritesOpen(false)} />
+
+            <style>{`
+                @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
+                ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+                input::placeholder { color: rgba(255,255,255,0.25); }
+            `}</style>
+        </div>
+    );
+}
+</file>
+
+<file path="backend/routes/chat.js">
+const express = require('express');
+const router = express.Router();
+const Mobile = require('../models/Mobile');
+const Groq = require('groq-sdk');
+
+router.post('/', async (req, res) => {
+try {
+const { message, image } = req.body;
+if (!message && !image) {
+return res.status(400).json({ error: "Message or image is required" });
+}
+console.log("User message:", message);
+const lowerMessage = (message || "").toLowerCase();
+
+// ---------------------------
+// 🖼 VISION AI LOGIC
+// ---------------------------
+if (image) {
+  try {
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const matches = image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      return res.status(400).json({ error: "Invalid image format" });
+    }
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+
+    const prompt = `You are MobileAssist AI, an expert mobile phone analyst based in India.
+All prices should be in Indian Rupees (INR ₹). Always respond in English.
+Analyze this phone image and provide:
+1. Mobile brand and model (if visible)
+2. Color and design
+3. Camera setup
+4. Display type
+5. Estimated category (budget/midrange/flagship)
+6. Estimated price in INR ₹
+User Question: ${message || "Please analyze this phone image."}
+Respond naturally in a chat-like format in English.`;
+
+    const response = await groq.chat.completions.create({
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Data}` } }
+          ]
+        }
+      ],
+      max_tokens: 800
+    });
+
+    const reply = response.choices[0]?.message?.content || "No response generated.";
+    return res.json({ type: "ai_vision", reply });
+
+  } catch (aiError) {
+    console.error("Groq Vision Error:", aiError);
+    return res.json({ type: "ai", reply: "⚠ AI Vision service temporarily unavailable. Please try again later." });
+  }
+}
+
+// ---------------------------
+// Quick check: does message look like a phone name/budget query?
+// ---------------------------
+const looksLikePhoneQuery = /\d{4,6}|iphone|samsung|vivo|oppo|realme|redmi|xiaomi|oneplus|motorola|poco|nokia|asus|google pixel|nothing phone/i.test(lowerMessage);
+
+let phones = [];
+if (looksLikePhoneQuery) {
+  phones = await Mobile.find().lean();
+}
+
+// ---------------------------
+// ⚖ PHONE COMPARISON LOGIC
+// ---------------------------
+if (phones.length > 0) {
+  const matchedPhones = phones.filter(phone =>
+  lowerMessage.includes(phone.model_name.toLowerCase())
+  );
+  const uniquePhones = [
+  ...new Map(matchedPhones.map(phone => [phone.model_name, phone])).values()
+  ];
+  if (uniquePhones.length >= 2) {
+  const comparisonText = uniquePhones.map(phone => `
+**${phone.model_name}**
+- 💰 Price: ₹${phone.price}
+- ⚙️ Processor: ${phone.processor}
+- 📦 RAM/Storage: ${phone.ram_internal_memory}
+- 🔋 Battery: ${phone.battery}
+- 🖥️ Display: ${phone.display}
+- 📷 Rear Camera: ${phone.rear_cameras}
+- 🤳 Front Camera: ${phone.front_cameras}
+- ✨ Features: ${phone.additional_features}
+`).join("\n---\n");
+  return res.json({
+  type: "comparison",
+  phones: uniquePhones,
+  reply: `## ⚖️ Phone Comparison\n${comparisonText}`
+  });
+  }
+
+  // ---------------------------
+  // SINGLE PHONE SEARCH
+  // ---------------------------
+  const phone = phones.find(p =>
+  lowerMessage.includes(p.model_name.toLowerCase())
+  );
+  if (phone) {
+  const phoneText = `**${phone.model_name}**
+
+- 💰 **Price:** ₹${phone.price}
+- ⚙️ **Processor:** ${phone.processor}
+- 📦 **RAM/Storage:** ${phone.ram_internal_memory}
+- 🔋 **Battery:** ${phone.battery}
+- 🖥️ **Display:** ${phone.display}
+- 📷 **Rear Camera:** ${phone.rear_cameras}
+- 🤳 **Front Camera:** ${phone.front_cameras}
+- ✨ **Features:** ${phone.additional_features}`;
+  return res.json({
+  type: "phone",
+  phone: phone,
+  reply: phoneText
+  });
+  }
+
+  // ---------------------------
+  // 💰 BUDGET-BASED DATABASE SEARCH
+  // ---------------------------
+  const budgetMatch = lowerMessage.match(/(\d{4,6})/);
+  const isBudgetQuery = /under|below|within|budget|range|best phones?|suggest|recommend/i.test(lowerMessage);
+
+  if (budgetMatch && isBudgetQuery) {
+    const budget = parseInt(budgetMatch[1]);
+    const minBudget = budget * 0.7;
+
+    const matchingPhones = phones.filter(p => {
+      const price = parseInt(String(p.price).replace(/[^\d]/g, ''));
+      return price && price <= budget && price >= minBudget;
+    }).sort((a, b) => {
+      const priceA = parseInt(String(a.price).replace(/[^\d]/g, ''));
+      const priceB = parseInt(String(b.price).replace(/[^\d]/g, ''));
+      return priceB - priceA;
+    }).slice(0, 5);
+
+    if (matchingPhones.length > 0) {
+      const listText = matchingPhones.map((p, i) => `
+**${i + 1}. ${p.model_name}** — ₹${p.price}
+   - ${p.processor} | ${p.ram_internal_memory} | ${p.battery}
+`).join("\n");
+
+      return res.json({
+        type: "comparison",
+        phones: matchingPhones,
+        reply: `## 📱 Best Phones Under ₹${budget.toLocaleString('en-IN')}\n${listText}\n\n*Want full specs of any phone? Just ask its name!*`
+      });
+    }
+  }
+}
+
+// ---------------------------
+// GROQ AI — Fast model (8B instant), restricted to mobile topics only
+// ---------------------------
+try {
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+const response = await groq.chat.completions.create({
+  model: "llama-3.1-8b-instant",
+  messages: [
+    {
+      role: "system",
+      content: `You are MobileAssist AI, India's fastest mobile phone assistant.
+
+STRICT SCOPE RULE (most important — follow this above everything else):
+- You ONLY answer questions about mobile phones, smartphones, their specifications, prices, comparisons, brands, accessories, and buying advice
+- If the user asks ANYTHING unrelated to mobile phones (general knowledge, coding, science, NLP, AI concepts, jokes, history, personal advice, or any other topic), do NOT answer it
+- For off-topic questions, respond ONLY with exactly this: "I'm MobileAssist AI — I can only help with mobile phone related questions like specs, prices, and recommendations. Ask me about phones! 📱"
+- Do not explain why you can't answer, do not give a partial answer, and do not apologize at length — just give that one redirect line
+
+When the question IS about phones, follow these rules:
+- Reply in English by default, unless user writes in Hindi, Kannada, Telugu, or another language
+- Never mix languages in one response
+- Always use Indian Rupees (INR ₹), never USD
+- Suggest only phones officially available in India
+- Format with markdown: **bold** phone names, bullet points for specs
+- Be concise and direct — give specific model names
+- If recommending phones, give at least 3 options briefly
+- Never say "I don't have real-time data" — give your best estimate`
+    },
+    {
+      role: "user",
+      content: message
+    }
+  ],
+  max_tokens: 700,
+  temperature: 0.4
+});
+
+const reply = response.choices[0]?.message?.content || "No response generated.";
+return res.json({ type: "ai", reply });
+
+} catch (aiError) {
+console.error("Groq Error:", aiError);
+return res.json({
+type: "ai",
+reply: "⚠ AI service temporarily unavailable. Please try again later."
+});
+}
+} catch (error) {
+console.error("Chat Error:", error);
+res.status(500).json({ error: "Server error" });
+}
+});
+
+module.exports = router;
+</file>
+
+</files>

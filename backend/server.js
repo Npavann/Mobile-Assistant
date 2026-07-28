@@ -5,6 +5,7 @@ const cors = require('cors');
 const uploadRoutes = require('./routes/upload');
 const chatRoutes = require('./routes/chat');
 const userAuthRoutes = require('./routes/userAuth');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/api/upload', uploadRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/user', userAuthRoutes);
+app.use('/api/auth', authRoutes);
 
 const PORT = process.env.PORT || 5000;
 mongoose.connect(process.env.MONGODB_URI)
