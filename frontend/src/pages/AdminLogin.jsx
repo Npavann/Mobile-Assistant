@@ -42,25 +42,23 @@ export default function AdminLogin() {
 
   const handleSendOtp = async () => {
     if (!forgotEmail.trim()) { setForgotError("Please enter your email."); return; }
-    setForgotLoading(true); setForgotError("");
-    try {
-      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/send-otp`, { email: forgotEmail });
-      setOtpSent(true);
-      setForgotMsg("OTP sent! Check your inbox.");
-    } catch (err) { setForgotError(err.response?.data?.error || "Failed to send OTP."); }
-    setForgotLoading(false);
-  };
+    if (forgotEmail !== "nayakvadje21@gmail.com") {
+        setForgotError("Email not found.");
+        return;
+    }
+    setOtpSent(true);
+    setForgotMsg("Answer the secret question to reset your password.");
+};
 
-  const handleVerifyOtp = async () => {
-    if (!otp.trim()) { setForgotError("Please enter the OTP."); return; }
-    setForgotLoading(true); setForgotError("");
-    try {
-      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/verify-otp`, { email: forgotEmail, otp });
-      setOtpVerified(true);
-      setForgotMsg("✅ Identity verified! Your password is: admin123");
-    } catch (err) { setForgotError(err.response?.data?.error || "Invalid OTP."); }
-    setForgotLoading(false);
-  };
+const handleVerifyOtp = async () => {
+    if (!otp.trim()) { setForgotError("Please enter the answer."); return; }
+    if (otp.toLowerCase() === "mobileassist") {
+        setOtpVerified(true);
+        setForgotMsg("✅ Verified! Your password is: admin123");
+    } else {
+        setForgotError("Wrong answer. Please try again.");
+    }
+};
 
   const resetForgot = () => { setShowForgot(false); setOtpSent(false); setOtpVerified(false); setForgotMsg(""); setForgotError(""); setForgotEmail(""); setOtp(""); };
 
