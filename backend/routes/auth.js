@@ -1,16 +1,40 @@
 const express = require('express');
 const router = express.Router();
 const nodemailer = require('nodemailer');
+const dns = require('dns').promises;
 
 const otpStore = {};
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// Render's network can't route to Gmail's IPv6 address, and setDefaultResultOrder
+// alone hasn't been reliable here — so we resolve an IPv4 address ourselves and
+// connect directly to it. `tls.servername` keeps certificate validation correct
+// even though we're connecting via a raw IP instead of the hostname.
+let cachedTransporter = null;
+let cachedAt = 0;
+const CACHE_MS = 5 * 60 * 1000; // re-resolve every 5 minutes in case the IP changes
+
+async function getTransporter() {
+  const now = Date.now();
+  if (cachedTransporter && (now - cachedAt) < CACHE_MS) {
+    return cachedTransporter;
+  }
+  const addresses = await dns.resolve4('smtp.gmail.com');
+  console.log("Resolved smtp.gmail.com to IPv4:", addresses);
+  cachedTransporter = nodemailer.createTransport({
+    host: addresses[0],
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+    tls: {
+      servername: 'smtp.gmail.com',
+    },
+  });
+  cachedAt = now;
+  return cachedTransporter;
+}
 
 // Send OTP
 router.post('/send-otp', async (req, res) => {
@@ -28,6 +52,7 @@ router.post('/send-otp', async (req, res) => {
   console.log("Generated OTP for", email, ":", otp);
 
   try {
+    const transporter = await getTransporter();
     await transporter.sendMail({
       from: `"MobileAssist AI" <${process.env.EMAIL_USER}>`,
       to: email,
