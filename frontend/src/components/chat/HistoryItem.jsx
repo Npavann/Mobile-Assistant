@@ -1,6 +1,34 @@
 import { MessageSquare, Trash2, Edit2, Check, X } from 'lucide-react';
 import { useState } from 'react';
 
+// Same dark navy/indigo theme as Sidebar.jsx
+const COLORS = {
+    activeBg: "rgba(99,102,241,0.18)",
+    activeBorder: "rgba(99,102,241,0.4)",
+    hoverBg: "rgba(255,255,255,0.06)",
+    iconBoxBg: "rgba(255,255,255,0.07)",
+    iconBoxBgActive: "rgba(99,102,241,0.3)",
+    iconColor: "#8582AC",
+    iconColorActive: "#A5B4FC",
+    titleText: "#E4E2F5",
+    titleTextActive: "#FFFFFF",
+    editInputBg: "rgba(255,255,255,0.08)",
+    editInputBorder: "rgba(99,102,241,0.5)",
+    editInputText: "#F5F4FC",
+    confirmBg: "rgba(16,185,129,0.18)",
+    confirmIcon: "#34D399",
+    cancelBg: "rgba(239,68,68,0.18)",
+    cancelIcon: "#F87171",
+    actionBtnBg: "rgba(255,255,255,0.06)",
+    actionBtnIcon: "#9C99C2",
+    actionBtnHoverBg: "rgba(255,255,255,0.14)",
+    actionBtnHoverIcon: "#FFFFFF",
+    deleteBtnBg: "rgba(239,68,68,0.1)",
+    deleteBtnIcon: "rgba(248,113,113,0.7)",
+    deleteBtnHoverBg: "rgba(239,68,68,0.22)",
+    deleteBtnHoverIcon: "#F87171",
+};
+
 export default function HistoryItem({
     session, isActive, onSelect, onDelete, onRename, isCollapsed
 }) {
@@ -29,10 +57,10 @@ export default function HistoryItem({
                 borderRadius: "10px",
                 cursor: "pointer",
                 background: isActive
-                    ? "rgba(99,102,241,0.15)"
-                    : isHovered ? "rgba(255,255,255,0.05)" : "transparent",
+                    ? COLORS.activeBg
+                    : isHovered ? COLORS.hoverBg : "transparent",
                 border: isActive
-                    ? "1px solid rgba(99,102,241,0.25)"
+                    ? `1px solid ${COLORS.activeBorder}`
                     : "1px solid transparent",
                 transition: "all 0.15s ease",
                 marginBottom: "2px",
@@ -43,11 +71,11 @@ export default function HistoryItem({
             <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flex: 1, minWidth: 0 }}>
                 <div style={{
                     width: "28px", height: "28px", flexShrink: 0,
-                    background: isActive ? "rgba(99,102,241,0.25)" : "rgba(255,255,255,0.05)",
+                    background: isActive ? COLORS.iconBoxBgActive : COLORS.iconBoxBg,
                     borderRadius: "7px",
                     display: "flex", alignItems: "center", justifyContent: "center"
                 }}>
-                    <MessageSquare size={13} color={isActive ? "#818cf8" : "rgba(255,255,255,0.35)"} />
+                    <MessageSquare size={13} color={isActive ? COLORS.iconColorActive : COLORS.iconColor} />
                 </div>
 
                 {!isCollapsed && (
@@ -60,18 +88,18 @@ export default function HistoryItem({
                                 onChange={e => setEditTitle(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && handleEditSubmit(e)}
                                 style={{
-                                    flex: 1, background: "rgba(255,255,255,0.06)",
-                                    border: "1px solid rgba(99,102,241,0.4)",
-                                    borderRadius: "6px", color: "white",
+                                    flex: 1, background: COLORS.editInputBg,
+                                    border: `1px solid ${COLORS.editInputBorder}`,
+                                    borderRadius: "6px", color: COLORS.editInputText,
                                     padding: "3px 8px", fontSize: "0.8rem", outline: "none"
                                 }}
                             />
                             <button onClick={handleEditSubmit}
-                                style={{ background: "rgba(16,185,129,0.15)", border: "none", color: "#10b981", cursor: "pointer", borderRadius: "5px", padding: "3px 6px", display: "flex" }}>
+                                style={{ background: COLORS.confirmBg, border: "none", color: COLORS.confirmIcon, cursor: "pointer", borderRadius: "5px", padding: "3px 6px", display: "flex" }}>
                                 <Check size={12} />
                             </button>
                             <button onClick={() => { setIsEditing(false); setEditTitle(session.title); }}
-                                style={{ background: "rgba(239,68,68,0.15)", border: "none", color: "#ef4444", cursor: "pointer", borderRadius: "5px", padding: "3px 6px", display: "flex" }}>
+                                style={{ background: COLORS.cancelBg, border: "none", color: COLORS.cancelIcon, cursor: "pointer", borderRadius: "5px", padding: "3px 6px", display: "flex" }}>
                                 <X size={12} />
                             </button>
                         </div>
@@ -79,7 +107,7 @@ export default function HistoryItem({
                         <span style={{
                             fontSize: "0.85rem",
                             fontWeight: isActive ? 500 : 400,
-                            color: isActive ? "white" : "rgba(255,255,255,0.55)",
+                            color: isActive ? COLORS.titleTextActive : COLORS.titleText,
                             whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                             flex: 1
                         }}>
@@ -95,26 +123,26 @@ export default function HistoryItem({
                     <button
                         onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
                         style={{
-                            background: "rgba(255,255,255,0.06)", border: "none",
-                            color: "rgba(255,255,255,0.4)", cursor: "pointer",
+                            background: COLORS.actionBtnBg, border: "none",
+                            color: COLORS.actionBtnIcon, cursor: "pointer",
                             borderRadius: "6px", padding: "4px", display: "flex",
                             transition: "all 0.15s"
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.color = "white"; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
+                        onMouseEnter={e => { e.currentTarget.style.background = COLORS.actionBtnHoverBg; e.currentTarget.style.color = COLORS.actionBtnHoverIcon; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = COLORS.actionBtnBg; e.currentTarget.style.color = COLORS.actionBtnIcon; }}
                     >
                         <Edit2 size={12} />
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(session.id); }}
                         style={{
-                            background: "rgba(239,68,68,0.08)", border: "none",
-                            color: "rgba(239,68,68,0.5)", cursor: "pointer",
+                            background: COLORS.deleteBtnBg, border: "none",
+                            color: COLORS.deleteBtnIcon, cursor: "pointer",
                             borderRadius: "6px", padding: "4px", display: "flex",
                             transition: "all 0.15s"
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.2)"; e.currentTarget.style.color = "#ef4444"; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "rgba(239,68,68,0.5)"; }}
+                        onMouseEnter={e => { e.currentTarget.style.background = COLORS.deleteBtnHoverBg; e.currentTarget.style.color = COLORS.deleteBtnHoverIcon; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = COLORS.deleteBtnBg; e.currentTarget.style.color = COLORS.deleteBtnIcon; }}
                     >
                         <Trash2 size={12} />
                     </button>

@@ -8,14 +8,101 @@ import { convertToBase64 } from "../utils/VisionService";
 import { getHistory, saveHistory, createNewSession } from "../utils/storage";
 import FavoritesModal from "../components/chat/FavoritesModal";
 
-const SUGGESTIONS = [
-    { icon: <Smartphone size={20} />, text: "Best phones under ₹20,000", color: "#6366f1" },
-    { icon: <GitCompare size={20} />, text: "Compare iPhone 15 vs Samsung S24", color: "#10b981" },
-    { icon: <DollarSign size={20} />, text: "Top 5 flagship phones in India", color: "#f59e0b" },
-    { icon: <Camera size={20} />, text: "Best camera phones under ₹30,000", color: "#ec4899" },
+// ---- Professional color themes ----
+// A pool of polished dark palettes. One is picked at random each time
+// the page loads, so the app feels fresh without ever looking garish.
+function buildTheme({ pageBg, logoGradient, accent, star, highlight, suggestionColors }) {
+    return {
+        pageBg,
+        topBarBorder: "rgba(255, 255, 255, 0.1)",
+        iconMuted: "#B8B5D6",
+        titleText: "#FFFFFF",
+        star,
+        logoGradient,
+        bodyText: "#F0EFFA",
+        subtleText: "#B0ADD1",
+        cardBg: "rgba(255, 255, 255, 0.06)",
+        cardBgHover: "rgba(255, 255, 255, 0.1)",
+        cardBorder: "rgba(255, 255, 255, 0.14)",
+        cardHighlightBorder: highlight,
+        inputBarBg: "rgba(10, 10, 18, 0.55)",
+        inputPillBg: "rgba(255, 255, 255, 0.07)",
+        inputPillBorder: "rgba(255, 255, 255, 0.16)",
+        inputText: "#F5F4FC",
+        placeholder: "#8582AC",
+        accent,
+        danger: "#F04747",
+        suggestionColors,
+    };
+}
+
+const PALETTES = [
+    buildTheme({ // Indigo Night
+        pageBg: "radial-gradient(ellipse at 30% 20%, #45437F 0%, #2A2856 38%, #16152E 72%, #0B0A1A 100%)",
+        logoGradient: "linear-gradient(135deg, #7B6FEE, #6C5CE7)",
+        accent: "#6C5CE7", star: "#F5C542", highlight: "#7B6FEE",
+        suggestionColors: ["#818CF8", "#34D399", "#FBBF24", "#F472B6"],
+    }),
+    buildTheme({ // Slate Teal
+        pageBg: "radial-gradient(ellipse at 30% 20%, #2E4A52 0%, #1C3238 38%, #101E22 72%, #080F11 100%)",
+        logoGradient: "linear-gradient(135deg, #2DD4BF, #0EA5A0)",
+        accent: "#14B8A6", star: "#FBBF24", highlight: "#2DD4BF",
+        suggestionColors: ["#2DD4BF", "#818CF8", "#FBBF24", "#FB7185"],
+    }),
+    buildTheme({ // Charcoal Emerald
+        pageBg: "radial-gradient(ellipse at 30% 20%, #2E3B33 0%, #1B2621 38%, #101713 72%, #080B09 100%)",
+        logoGradient: "linear-gradient(135deg, #34D399, #059669)",
+        accent: "#10B981", star: "#FBBF24", highlight: "#34D399",
+        suggestionColors: ["#34D399", "#60A5FA", "#FBBF24", "#F472B6"],
+    }),
+    buildTheme({ // Deep Plum
+        pageBg: "radial-gradient(ellipse at 30% 20%, #4A2E52 0%, #321C38 38%, #1E1022 72%, #0F080D 100%)",
+        logoGradient: "linear-gradient(135deg, #E879F9, #C026D3)",
+        accent: "#D946EF", star: "#FBBF24", highlight: "#E879F9",
+        suggestionColors: ["#E879F9", "#818CF8", "#FBBF24", "#34D399"],
+    }),
+    buildTheme({ // Midnight Gold
+        pageBg: "radial-gradient(ellipse at 30% 20%, #3A331F 0%, #241F13 38%, #15120A 72%, #0A0905 100%)",
+        logoGradient: "linear-gradient(135deg, #FBBF24, #D97706)",
+        accent: "#F59E0B", star: "#FBBF24", highlight: "#FBBF24",
+        suggestionColors: ["#FBBF24", "#60A5FA", "#34D399", "#F472B6"],
+    }),
+    buildTheme({ // Steel Blue
+        pageBg: "radial-gradient(ellipse at 30% 20%, #2C3E5C 0%, #1B2740 38%, #0F1626 72%, #080C15 100%)",
+        logoGradient: "linear-gradient(135deg, #60A5FA, #3B82F6)",
+        accent: "#3B82F6", star: "#FBBF24", highlight: "#60A5FA",
+        suggestionColors: ["#60A5FA", "#34D399", "#FBBF24", "#F472B6"],
+    }),
 ];
 
+const SUGGESTION_ITEMS = [
+    { icon: <Smartphone size={20} />, text: "Best phones under ₹20,000" },
+    { icon: <GitCompare size={20} />, text: "Compare iPhone 15 vs Samsung S24" },
+    { icon: <DollarSign size={20} />, text: "Top 5 flagship phones in India" },
+    { icon: <Camera size={20} />, text: "Best camera phones under ₹30,000" },
+];
+
+// Convert a hex color like "#818CF8" to "rgba(129,140,248,alpha)" for tinted card backgrounds
+function withAlpha(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export default function Chat() {
+    // Theme auto-cycles to the next palette every 12 seconds while the page is open.
+    const [themeIndex, setThemeIndex] = useState(() => Math.floor(Math.random() * PALETTES.length));
+    const COLORS = PALETTES[themeIndex];
+    const SUGGESTIONS = SUGGESTION_ITEMS.map((item, i) => ({ ...item, color: COLORS.suggestionColors[i] }));
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setThemeIndex(prev => (prev + 1) % PALETTES.length);
+        }, 12000);
+        return () => clearInterval(interval);
+    }, []);
+
     const initialMessage = {
         role: "bot",
         content: "Hi! I am your AI Mobile Assistant. I can help you find phones, compare models, or suggest the best device."
@@ -200,7 +287,7 @@ export default function Chat() {
     };
 
     return (
-        <div style={{ display: "flex", height: "100vh", background: "#0f0f0f", color: "white", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
+        <div style={{ display: "flex", height: "100vh", background: COLORS.pageBg, color: COLORS.bodyText, fontFamily: "'Inter', sans-serif", overflow: "hidden", transition: "background 1.5s ease" }}>
 
             {/* Sidebar */}
             <Sidebar
@@ -217,7 +304,7 @@ export default function Chat() {
 
             {/* Overlay for mobile */}
             {isSidebarOpen && (
-                <div onClick={() => setIsSidebarOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 40 }} />
+                <div onClick={() => setIsSidebarOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(44, 24, 90, 0.4)", zIndex: 40 }} />
             )}
 
             {/* Main Area */}
@@ -225,12 +312,12 @@ export default function Chat() {
                 onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
 
                 {/* Top Bar */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                    <button onClick={() => setIsSidebarOpen(true)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.6)", cursor: "pointer", padding: "0.4rem", borderRadius: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem", borderBottom: `1px solid ${COLORS.topBarBorder}` }}>
+                    <button onClick={() => setIsSidebarOpen(true)} style={{ background: "none", border: "none", color: COLORS.iconMuted, cursor: "pointer", padding: "0.4rem", borderRadius: "8px" }}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                     </button>
-                    <span style={{ fontWeight: 600, fontSize: "1rem", color: "rgba(255,255,255,0.9)" }}>MobileAssist AI</span>
-                    <button onClick={() => setIsFavoritesOpen(true)} style={{ background: "none", border: "none", color: "#fbbf24", cursor: "pointer", padding: "0.4rem" }}>
+                    <span style={{ fontWeight: 600, fontSize: "1rem", color: COLORS.titleText }}>MobileAssist AI</span>
+                    <button onClick={() => setIsFavoritesOpen(true)} style={{ background: "none", border: "none", color: COLORS.star, cursor: "pointer", padding: "0.4rem", display: "flex" }}>
                         <Star size={20} />
                     </button>
                 </div>
@@ -240,22 +327,31 @@ export default function Chat() {
                     {isNewChat ? (
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: "2rem 1rem" }}>
                             {/* Logo */}
-                            <div style={{ width: "64px", height: "64px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1.5rem", boxShadow: "0 8px 32px rgba(99,102,241,0.3)" }}>
+                            <div style={{ width: "64px", height: "64px", background: COLORS.logoGradient, borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1.5rem", boxShadow: "0 8px 32px rgba(108, 92, 231, 0.35)", transition: "background 1.5s ease" }}>
                                 <Smartphone size={32} color="white" />
                             </div>
-                            <h1 style={{ fontSize: "1.75rem", fontWeight: 700, margin: "0 0 0.5rem", textAlign: "center" }}>MobileAssist AI</h1>
-                            <p style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginBottom: "2rem", fontSize: "0.95rem" }}>Your smart mobile phone assistant</p>
+                            <h1 style={{ fontSize: "1.75rem", fontWeight: 700, margin: "0 0 0.5rem", textAlign: "center", color: COLORS.titleText }}>MobileAssist AI</h1>
+                            <p style={{ color: COLORS.subtleText, textAlign: "center", marginBottom: "2rem", fontSize: "0.95rem" }}>Your smart mobile phone assistant</p>
 
                             {/* Suggestion Cards */}
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", width: "100%", maxWidth: "480px" }}>
                                 {SUGGESTIONS.map((s, i) => (
                                     <button key={i} onClick={() => { setInput(s.text); inputRef.current?.focus(); }}
-                                        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "1rem", cursor: "pointer", textAlign: "left", color: "white", transition: "all 0.2s" }}
-                                        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
-                                        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                                        style={{
+                                            background: withAlpha(s.color, 0.1),
+                                            border: `1.5px solid ${withAlpha(s.color, 0.35)}`,
+                                            borderRadius: "12px",
+                                            padding: "1rem",
+                                            cursor: "pointer",
+                                            textAlign: "left",
+                                            color: COLORS.bodyText,
+                                            transition: "background 0.2s"
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.background = withAlpha(s.color, 0.18)}
+                                        onMouseLeave={e => e.currentTarget.style.background = withAlpha(s.color, 0.1)}
                                     >
                                         <div style={{ color: s.color, marginBottom: "0.5rem" }}>{s.icon}</div>
-                                        <div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.7)", lineHeight: 1.4 }}>{s.text}</div>
+                                        <div style={{ fontSize: "0.8rem", color: COLORS.bodyText, lineHeight: 1.4 }}>{s.text}</div>
                                     </button>
                                 ))}
                             </div>
@@ -267,12 +363,12 @@ export default function Chat() {
                             ))}
                             {isLoading && (
                                 <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
-                                    <div style={{ width: "36px", height: "36px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                                    <div style={{ width: "36px", height: "36px", background: COLORS.logoGradient, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                                         <Bot size={18} color="white" />
                                     </div>
-                                    <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "16px", padding: "1rem", display: "flex", gap: "4px", alignItems: "center" }}>
+                                    <div style={{ background: COLORS.cardBg, borderRadius: "16px", padding: "1rem", display: "flex", gap: "4px", alignItems: "center" }}>
                                         {[0,1,2].map(i => (
-                                            <div key={i} style={{ width: "8px", height: "8px", background: "#6366f1", borderRadius: "50%", animation: `bounce 1.2s ${i*0.2}s infinite` }} />
+                                            <div key={i} style={{ width: "8px", height: "8px", background: COLORS.accent, borderRadius: "50%", animation: `bounce 1.2s ${i*0.2}s infinite` }} />
                                         ))}
                                     </div>
                                 </div>
@@ -283,9 +379,9 @@ export default function Chat() {
                 </div>
 
                 {/* Input Area */}
-                <div style={{ padding: "1rem", borderTop: "1px solid rgba(255,255,255,0.06)", background: "#0f0f0f" }}>
+                <div style={{ padding: "1rem", borderTop: `1px solid ${COLORS.topBarBorder}`, background: COLORS.inputBarBg, transition: "background 1.5s ease, border-color 1.5s ease" }}>
                     <form onSubmit={handleSubmit} style={{ maxWidth: "720px", margin: "0 auto" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "8px 12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", background: COLORS.inputPillBg, border: `2px solid ${COLORS.inputPillBorder}`, borderRadius: "16px", padding: "8px 12px" }}>
                             <ImageUpload selectedImage={selectedImage} onImageSelect={setSelectedImage} onImageRemove={() => setSelectedImage(null)} />
                             <input
                                 ref={inputRef}
@@ -294,13 +390,13 @@ export default function Chat() {
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder="Ask about phones..."
                                 disabled={isLoading}
-                                style={{ flex: 1, background: "none", border: "none", color: "white", fontSize: "0.95rem", outline: "none", padding: "0.4rem 0" }}
+                                style={{ flex: 1, background: "none", border: "none", color: COLORS.inputText, fontSize: "0.95rem", outline: "none", padding: "0.4rem 0" }}
                             />
-                            <button type="button" onClick={startRecording} style={{ background: "none", border: "none", color: isRecording ? "#ef4444" : "rgba(255,255,255,0.4)", cursor: "pointer", padding: "0.4rem", display: "flex" }}>
+                            <button type="button" onClick={startRecording} style={{ background: "none", border: "none", color: isRecording ? COLORS.danger : COLORS.subtleText, cursor: "pointer", padding: "0.4rem", display: "flex" }}>
                                 <Mic size={20} />
                             </button>
                             <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading}
-                                style={{ width: "36px", height: "36px", background: (input.trim() || selectedImage) ? "#6366f1" : "rgba(255,255,255,0.1)", border: "none", borderRadius: "10px", color: "white", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "background 0.2s" }}>
+                                style={{ width: "36px", height: "36px", background: (input.trim() || selectedImage) ? COLORS.accent : "rgba(0,0,0,0.1)", border: "none", borderRadius: "10px", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "background 0.2s" }}>
                                 <Send size={16} />
                             </button>
                         </div>
@@ -312,8 +408,8 @@ export default function Chat() {
 
             <style>{`
                 @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
-                ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-                input::placeholder { color: rgba(255,255,255,0.25); }
+                ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+                input::placeholder { color: rgba(44, 44, 44, 0.45); }
             `}</style>
         </div>
     );

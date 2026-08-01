@@ -110,3 +110,7 @@ export default function FavoritesModal({ isOpen, onClose }) {
         </div>
     );
 }
+
+
+
+

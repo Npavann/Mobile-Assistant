@@ -8,8 +8,8 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
 // Send OTP
@@ -17,7 +17,7 @@ router.post('/send-otp', async (req, res) => {
   const { email } = req.body;
   const adminEmail = process.env.ADMIN_EMAIL;
 
-  if (email !== adminEmail) {
+  if (!email || email !== adminEmail) {
     return res.status(400).json({ error: "Email not found" });
   }
 
@@ -26,7 +26,7 @@ router.post('/send-otp', async (req, res) => {
 
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: `"MobileAssist AI" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'MobileAssist AI - Password Reset OTP',
       html: `
@@ -39,6 +39,7 @@ router.post('/send-otp', async (req, res) => {
         </div>
       `
     });
+
     res.json({ success: true, message: "OTP sent to your email" });
   } catch (err) {
     console.error("Email error:", err);

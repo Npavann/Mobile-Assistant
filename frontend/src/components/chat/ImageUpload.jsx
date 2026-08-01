@@ -70,7 +70,7 @@ export default function ImageUpload({ selectedImage, onImageSelect, onImageRemov
                     bottom: '110%',
                     left: '0',
                     background: 'rgba(15, 23, 42, 0.98)',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(0,0,0,0.1)',
                     borderRadius: '12px',
                     padding: '0.5rem',
                     boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
@@ -88,7 +88,7 @@ export default function ImageUpload({ selectedImage, onImageSelect, onImageRemov
                             fontSize: '0.9rem', fontWeight: 500,
                             transition: 'background 0.2s'
                         }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.08)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'none'}
                     >
                         <div style={{ width: '32px', height: '32px', background: 'rgba(16,185,129,0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -108,7 +108,7 @@ export default function ImageUpload({ selectedImage, onImageSelect, onImageRemov
                             fontSize: '0.9rem', fontWeight: 500,
                             transition: 'background 0.2s'
                         }}
-                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.08)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'none'}
                     >
                         <div style={{ width: '32px', height: '32px', background: 'rgba(99,102,241,0.2)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -126,7 +126,7 @@ export default function ImageUpload({ selectedImage, onImageSelect, onImageRemov
                     marginBottom: '0.5rem',
                     background: 'rgba(30, 41, 59, 0.95)',
                     padding: '0.75rem', borderRadius: '0.75rem',
-                    border: '1px solid rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(0,0,0,0.1)',
                     boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)',
                     zIndex: 50
                 }}>
@@ -155,3 +155,6 @@ export default function ImageUpload({ selectedImage, onImageSelect, onImageRemov
         </div>
     );
 }
+
+
+

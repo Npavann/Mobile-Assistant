@@ -17,8 +17,8 @@ html, body {
 
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: #0f0f0f;
-    color: white;
+    background-color: #f9f5f067;
+    color: #f1eeee;
     line-height: 1.5;
     overflow: hidden;
 }
@@ -35,7 +35,7 @@ a { color: inherit; text-decoration: none; }
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 4px; }
 
 /* Typing dot animation */
 @keyframes bounce {
@@ -57,10 +57,10 @@ a { color: inherit; text-decoration: none; }
 
 /* Message bubbles */
 .bubble {
-    background: rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.06);
     padding: 1rem 1.25rem;
     border-radius: 16px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(0,0,0,0.08);
     font-size: 0.95rem;
     line-height: 1.6;
     animation: fadeIn 0.3s ease-out;
@@ -89,11 +89,11 @@ a { color: inherit; text-decoration: none; }
 /* Admin styles */
 :root {
     --primary: #6366f1;
-    --bg-color: #0f0f0f;
-    --panel-bg: rgba(30,41,59,0.7);
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --border: rgba(255,255,255,0.1);
+    --bg-color: #eef2ff;
+    --panel-bg: rgba(255,255,255,0.7);
+    --text-main: #1e293b;
+    --text-muted: #4b5563;
+    --border: rgba(0,0,0,0.1);
     --success: #10b981;
     --error: #ef4444;
 }
@@ -134,7 +134,7 @@ a { color: inherit; text-decoration: none; }
 
 .file-label {
     display: inline-flex; align-items: center; gap: 0.5rem;
-    background: rgba(255,255,255,0.05);
+    background: rgba(0,0,0,0.05);
     border: 1px solid var(--border);
     padding: 1rem 2rem; border-radius: 12px;
     cursor: pointer; font-weight: 500;
@@ -154,9 +154,9 @@ a { color: inherit; text-decoration: none; }
 
 .search-input {
     width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem;
-    background: rgba(255,255,255,0.05);
+    background: rgba(80, 237, 237, 0.774);
     border: 1px solid var(--border);
-    border-radius: 8px; color: white; outline: none;
+    border-radius: 8px; color: #1e293b; outline: none;
 }
 
 .icon-btn {
@@ -165,10 +165,13 @@ a { color: inherit; text-decoration: none; }
     color: var(--text-muted); padding: 0.5rem; border-radius: 8px;
 }
 
-.icon-btn:hover { color: white; background: rgba(255,255,255,0.1); }
+.icon-btn:hover { color: #327bf0; background: rgba(185, 93, 93, 0.473); }
 
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(242, 236, 236, 0.1); border-radius: 4px; }
 
-input::placeholder { color: rgba(255,255,255,0.25); }
+input::placeholder { color: rgba(238, 216, 216, 0.25); }
+
+
+

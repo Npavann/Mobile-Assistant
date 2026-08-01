@@ -27,7 +27,7 @@ export default function ChatMessage({ msg, saveFavorite }) {
                         <img
                             src={msg.image}
                             alt="Uploaded attachment"
-                            style={{ maxWidth: "240px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 4px 6px rgba(0,0,0,0.2)" }}
+                            style={{ maxWidth: "240px", borderRadius: "8px", border: "1px solid rgba(0,0,0,0.1)", boxShadow: "0 4px 6px rgba(0,0,0,0.2)" }}
                         />
                     </div>
                 )}
@@ -45,7 +45,7 @@ export default function ChatMessage({ msg, saveFavorite }) {
                                 h2: ({ children }) => <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a5b4fc", margin: "0.5rem 0" }}>{children}</h2>,
                                 h3: ({ children }) => <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#a5b4fc", margin: "0.4rem 0" }}>{children}</h3>,
                                 code: ({ children }) => <code style={{ background: "rgba(0,0,0,0.3)", padding: "0.1rem 0.4rem", borderRadius: "4px", fontSize: "0.9em" }}>{children}</code>,
-                                hr: () => <hr style={{ border: "none", borderTop: "1px solid rgba(255,255,255,0.1)", margin: "0.5rem 0" }} />,
+                                hr: () => <hr style={{ border: "none", borderTop: "1px solid rgba(0,0,0,0.1)", margin: "0.5rem 0" }} />,
                             }}
                         >
                             {msg.content}
@@ -81,7 +81,7 @@ export default function ChatMessage({ msg, saveFavorite }) {
 
                 {/* Comparison Result */}
                 {msg.phones?.length > 0 && (
-                    <div style={{ marginTop: "1rem", paddingTop: "0.5rem", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                    <div style={{ marginTop: "1rem", paddingTop: "0.5rem", borderTop: "1px solid rgba(0,0,0,0.1)" }}>
                         {msg.phones.map((p, i) => (
                             <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem", background: "rgba(0,0,0,0.2)", padding: "0.5rem 0.75rem", borderRadius: "8px", marginBottom: "0.5rem" }}>
                                 <span style={{ fontWeight: 600, color: "#a5b4fc" }}>{p.model}</span>
@@ -98,3 +98,6 @@ export default function ChatMessage({ msg, saveFavorite }) {
         </div>
     );
 }
+
+
+

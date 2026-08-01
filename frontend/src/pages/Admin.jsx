@@ -47,13 +47,13 @@ export default function Admin() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0f0f0f", color: "white", fontFamily: "'Inter', sans-serif", padding: "1.5rem" }}>
+    <div style={{ minHeight: "100vh", background: "#eef2ff", color: "#1e293b", fontFamily: "'Inter', sans-serif", padding: "1.5rem" }}>
       
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <div>
           <h1 style={{ fontSize: "1.5rem", fontWeight: 700, margin: 0 }}>Database Admin</h1>
-          <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.8rem", margin: "0.25rem 0 0" }}>Manage mobile phone data</p>
+          <p style={{ color: "rgba(0,0,0,0.35)", fontSize: "0.8rem", margin: "0.25rem 0 0" }}>Manage mobile phone data</p>
         </div>
         <button onClick={handleLogout} style={{
           display: "flex", alignItems: "center", gap: "0.5rem",
@@ -68,8 +68,8 @@ export default function Admin() {
 
       {/* Upload Card */}
       <div style={{
-        background: "rgba(255,255,255,0.03)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(0,0,0,0.03)",
+        border: "1px solid rgba(0,0,0,0.08)",
         borderRadius: "20px", padding: "2rem",
         maxWidth: "480px", margin: "0 auto"
       }}>
@@ -86,15 +86,15 @@ export default function Admin() {
         </div>
 
         <h3 style={{ textAlign: "center", fontSize: "1.1rem", fontWeight: 700, marginBottom: "0.5rem" }}>Upload Mobile Data</h3>
-        <p style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginBottom: "1.5rem", lineHeight: 1.5 }}>
+        <p style={{ textAlign: "center", color: "rgba(0,0,0,0.4)", fontSize: "0.85rem", marginBottom: "1.5rem", lineHeight: 1.5 }}>
           Update the AI's knowledge base by uploading a CSV file containing mobile specifications.
         </p>
 
         {/* File Input */}
         <label style={{
           display: "flex", alignItems: "center", gap: "0.75rem",
-          background: "rgba(255,255,255,0.04)",
-          border: `1px solid ${file ? "rgba(99,102,241,0.4)" : "rgba(255,255,255,0.1)"}`,
+          background: "rgba(0,0,0,0.04)",
+          border: `1px solid ${file ? "rgba(99,102,241,0.4)" : "rgba(0,0,0,0.1)"}`,
           borderRadius: "12px", padding: "0.875rem 1rem",
           cursor: "pointer", marginBottom: "1rem",
           transition: "all 0.2s", width: "100%", boxSizing: "border-box"
@@ -102,21 +102,21 @@ export default function Admin() {
           <input type="file" accept=".csv" onChange={handleFileChange} style={{ display: "none" }} />
           <div style={{
             width: "36px", height: "36px", flexShrink: 0,
-            background: file ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.05)",
+            background: file ? "rgba(99,102,241,0.15)" : "rgba(0,0,0,0.05)",
             borderRadius: "8px",
             display: "flex", alignItems: "center", justifyContent: "center"
           }}>
-            <FileText size={18} color={file ? "#818cf8" : "rgba(255,255,255,0.3)"} />
+            <FileText size={18} color={file ? "#818cf8" : "rgba(0,0,0,0.3)"} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               fontSize: "0.875rem", fontWeight: 500,
-              color: file ? "white" : "rgba(255,255,255,0.4)",
+              color: file ? "white" : "rgba(0,0,0,0.4)",
               whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
             }}>
               {file ? file.name : "Choose CSV File"}
             </div>
-            <div style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.25)", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.72rem", color: "rgba(0,0,0,0.25)", marginTop: "2px" }}>
               {file ? `${(file.size / 1024).toFixed(1)} KB` : "Supports .csv files"}
             </div>
           </div>
@@ -126,9 +126,9 @@ export default function Admin() {
         <button onClick={handleUpload} disabled={!file || isUploading}
           style={{
             width: "100%", padding: "0.875rem",
-            background: file && !isUploading ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(255,255,255,0.06)",
+            background: file && !isUploading ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "rgba(0,0,0,0.06)",
             border: "none", borderRadius: "12px",
-            color: file && !isUploading ? "white" : "rgba(255,255,255,0.3)",
+            color: file && !isUploading ? "white" : "rgba(0,0,0,0.3)",
             fontSize: "0.95rem", fontWeight: 600,
             cursor: file && !isUploading ? "pointer" : "not-allowed",
             display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
@@ -162,3 +162,6 @@ export default function Admin() {
     </div>
   );
 }
+
+
+

@@ -26,7 +26,7 @@ export default function History() {
           background: "#ff4d4d",
           border: "none",
           borderRadius: "6px",
-          color: "white",
+          color: "#1e293b",
           cursor: "pointer"
         }}
       >
@@ -61,3 +61,6 @@ export default function History() {
     </div>
   );
 }
+
+
+

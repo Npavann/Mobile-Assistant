@@ -1,4 +1,7 @@
 require('dotenv').config();
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first'); // Render has no outbound IPv6 route — force IPv4 for all connections (Gmail SMTP, etc.)
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
