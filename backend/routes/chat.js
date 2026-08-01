@@ -48,16 +48,17 @@ Respond naturally in a chat-like format in English.`;
           ]
         }
       ],
-      max_tokens: 800,
-      thinking: { type: "disabled" }
+      max_completion_tokens: 800,
+      reasoning_effort: "none"
     });
 
     const reply = response.choices[0]?.message?.content || "No response generated.";
     return res.json({ type: "ai_vision", reply });
 
   } catch (aiError) {
-    console.error("Groq Vision Error:", aiError);
-    return res.json({ type: "ai", reply: "⚠ AI Vision service temporarily unavailable. Please try again later." });
+    console.error("Groq Vision Error:", aiError?.response?.data || aiError?.message || aiError);
+    const debugDetail = aiError?.error?.message || aiError?.response?.data?.error?.message || aiError?.message || "Unknown error";
+    return res.json({ type: "ai", reply: `⚠ AI Vision service temporarily unavailable. [DEBUG: ${debugDetail}]` });
   }
 }
 
