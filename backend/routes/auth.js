@@ -14,15 +14,18 @@ const transporter = nodemailer.createTransport({
 
 // Send OTP
 router.post('/send-otp', async (req, res) => {
+  console.log("send-otp route hit. Request body:", req.body);
   const { email } = req.body;
   const adminEmail = process.env.ADMIN_EMAIL;
 
   if (!email || email !== adminEmail) {
+    console.log("Email mismatch. Received:", email, "Expected:", adminEmail);
     return res.status(400).json({ error: "Email not found" });
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   otpStore[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 };
+  console.log("Generated OTP for", email, ":", otp);
 
   try {
     await transporter.sendMail({
@@ -40,9 +43,10 @@ router.post('/send-otp', async (req, res) => {
       `
     });
 
+    console.log("✅ Email sent successfully to", email);
     res.json({ success: true, message: "OTP sent to your email" });
   } catch (err) {
-    console.error("Email error:", err);
+    console.error("❌ Email error:", err);
     res.status(500).json({ error: "Failed to send OTP" });
   }
 });
