@@ -9,69 +9,76 @@ import { getHistory, saveHistory, createNewSession } from "../utils/storage";
 import FavoritesModal from "../components/chat/FavoritesModal";
 
 // ---- Professional color themes ----
-// A pool of polished dark palettes. One is picked at random each time
+// A pool of polished light palettes. One is picked at random each time
 // the page loads, so the app feels fresh without ever looking garish.
-function buildTheme({ pageBg, logoGradient, accent, star, highlight, suggestionColors }) {
+function buildTheme({ pageBg, logoGradient, accent, star, highlight, suggestionColors, glow }) {
     return {
         pageBg,
-        topBarBorder: "rgba(255, 255, 255, 0.1)",
-        iconMuted: "#B8B5D6",
-        titleText: "#FFFFFF",
+        topBarBorder: "rgba(0, 0, 0, 0.08)",
+        iconMuted: "#6B6B78",
+        titleText: "#1A1A2E",
         star,
         logoGradient,
-        bodyText: "#F0EFFA",
-        subtleText: "#B0ADD1",
-        cardBg: "rgba(255, 255, 255, 0.06)",
-        cardBgHover: "rgba(255, 255, 255, 0.1)",
-        cardBorder: "rgba(255, 255, 255, 0.14)",
+        bodyText: "#1F1F2E",
+        subtleText: "#5B5B6B",
+        cardBg: "#FFFFFF",
+        cardBgHover: "#F7F6FC",
+        cardBorder: "rgba(0, 0, 0, 0.08)",
         cardHighlightBorder: highlight,
-        inputBarBg: "rgba(10, 10, 18, 0.55)",
-        inputPillBg: "rgba(255, 255, 255, 0.07)",
-        inputPillBorder: "rgba(255, 255, 255, 0.16)",
-        inputText: "#F5F4FC",
-        placeholder: "#8582AC",
+        inputBarBg: "rgba(255, 255, 255, 0.75)",
+        inputPillBg: "#FFFFFF",
+        inputPillBorder: "rgba(0, 0, 0, 0.12)",
+        inputText: "#1A1A2E",
+        placeholder: "#9494A3",
         accent,
-        danger: "#F04747",
+        danger: "#DC2626",
         suggestionColors,
+        glow, // [colorA, colorB] used for the soft ambient light blobs behind the UI
     };
 }
 
 const PALETTES = [
-    buildTheme({ // Indigo Night
-        pageBg: "radial-gradient(ellipse at 30% 20%, #45437F 0%, #2A2856 38%, #16152E 72%, #0B0A1A 100%)",
+    buildTheme({ // Soft Lavender
+        pageBg: "#F5F2FE",
         logoGradient: "linear-gradient(135deg, #7B6FEE, #6C5CE7)",
-        accent: "#6C5CE7", star: "#F5C542", highlight: "#7B6FEE",
-        suggestionColors: ["#818CF8", "#34D399", "#FBBF24", "#F472B6"],
+        accent: "#6C5CE7", star: "#D97706", highlight: "#7B6FEE",
+        suggestionColors: ["#6366F1", "#059669", "#D97706", "#DB2777"],
+        glow: ["#7B6FEE", "#F472B6"],
     }),
-    buildTheme({ // Slate Teal
-        pageBg: "radial-gradient(ellipse at 30% 20%, #2E4A52 0%, #1C3238 38%, #101E22 72%, #080F11 100%)",
+    buildTheme({ // Mint Teal
+        pageBg: "#EAFBF6",
         logoGradient: "linear-gradient(135deg, #2DD4BF, #0EA5A0)",
-        accent: "#14B8A6", star: "#FBBF24", highlight: "#2DD4BF",
-        suggestionColors: ["#2DD4BF", "#818CF8", "#FBBF24", "#FB7185"],
+        accent: "#0D9488", star: "#D97706", highlight: "#2DD4BF",
+        suggestionColors: ["#0D9488", "#6366F1", "#D97706", "#E11D48"],
+        glow: ["#2DD4BF", "#818CF8"],
     }),
-    buildTheme({ // Charcoal Emerald
-        pageBg: "radial-gradient(ellipse at 30% 20%, #2E3B33 0%, #1B2621 38%, #101713 72%, #080B09 100%)",
+    buildTheme({ // Sage Green
+        pageBg: "#E9FBF0",
         logoGradient: "linear-gradient(135deg, #34D399, #059669)",
-        accent: "#10B981", star: "#FBBF24", highlight: "#34D399",
-        suggestionColors: ["#34D399", "#60A5FA", "#FBBF24", "#F472B6"],
+        accent: "#059669", star: "#D97706", highlight: "#34D399",
+        suggestionColors: ["#059669", "#2563EB", "#D97706", "#DB2777"],
+        glow: ["#34D399", "#FBBF24"],
     }),
-    buildTheme({ // Deep Plum
-        pageBg: "radial-gradient(ellipse at 30% 20%, #4A2E52 0%, #321C38 38%, #1E1022 72%, #0F080D 100%)",
+    buildTheme({ // Blush Plum
+        pageBg: "#FCEDFE",
         logoGradient: "linear-gradient(135deg, #E879F9, #C026D3)",
-        accent: "#D946EF", star: "#FBBF24", highlight: "#E879F9",
-        suggestionColors: ["#E879F9", "#818CF8", "#FBBF24", "#34D399"],
+        accent: "#C026D3", star: "#D97706", highlight: "#E879F9",
+        suggestionColors: ["#C026D3", "#4F46E5", "#D97706", "#059669"],
+        glow: ["#E879F9", "#34D399"],
     }),
-    buildTheme({ // Midnight Gold
-        pageBg: "radial-gradient(ellipse at 30% 20%, #3A331F 0%, #241F13 38%, #15120A 72%, #0A0905 100%)",
+    buildTheme({ // Cream Gold
+        pageBg: "#FFF8E5",
         logoGradient: "linear-gradient(135deg, #FBBF24, #D97706)",
-        accent: "#F59E0B", star: "#FBBF24", highlight: "#FBBF24",
-        suggestionColors: ["#FBBF24", "#60A5FA", "#34D399", "#F472B6"],
+        accent: "#D97706", star: "#B45309", highlight: "#FBBF24",
+        suggestionColors: ["#D97706", "#2563EB", "#059669", "#DB2777"],
+        glow: ["#FBBF24", "#60A5FA"],
     }),
-    buildTheme({ // Steel Blue
-        pageBg: "radial-gradient(ellipse at 30% 20%, #2C3E5C 0%, #1B2740 38%, #0F1626 72%, #080C15 100%)",
+    buildTheme({ // Sky Blue
+        pageBg: "#EAF3FE",
         logoGradient: "linear-gradient(135deg, #60A5FA, #3B82F6)",
-        accent: "#3B82F6", star: "#FBBF24", highlight: "#60A5FA",
-        suggestionColors: ["#60A5FA", "#34D399", "#FBBF24", "#F472B6"],
+        accent: "#2563EB", star: "#D97706", highlight: "#60A5FA",
+        suggestionColors: ["#2563EB", "#059669", "#D97706", "#DB2777"],
+        glow: ["#60A5FA", "#34D399"],
     }),
 ];
 
@@ -287,7 +294,7 @@ export default function Chat() {
     };
 
     return (
-        <div style={{ display: "flex", height: "100vh", background: COLORS.pageBg, color: COLORS.bodyText, fontFamily: "'Inter', sans-serif", overflow: "hidden", transition: "background 1.5s ease" }}>
+        <div style={{ display: "flex", height: "100vh", background: COLORS.pageBg, color: COLORS.bodyText, fontFamily: "'Inter', sans-serif", overflow: "hidden", transition: "background 1.5s ease", position: "relative" }}>
 
             {/* Sidebar */}
             <Sidebar
@@ -308,11 +315,11 @@ export default function Chat() {
             )}
 
             {/* Main Area */}
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", position: "relative" }}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden", position: "relative", zIndex: 1 }}
                 onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
 
                 {/* Top Bar */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem", borderBottom: `1px solid ${COLORS.topBarBorder}` }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem", borderBottom: `1px solid ${COLORS.topBarBorder}`, background: "rgba(255, 255, 255, 0.55)", backdropFilter: "blur(8px)" }}>
                     <button onClick={() => setIsSidebarOpen(true)} style={{ background: "none", border: "none", color: COLORS.iconMuted, cursor: "pointer", padding: "0.4rem", borderRadius: "8px" }}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                     </button>
@@ -327,7 +334,7 @@ export default function Chat() {
                     {isNewChat ? (
                         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: "2rem 1rem" }}>
                             {/* Logo */}
-                            <div style={{ width: "64px", height: "64px", background: COLORS.logoGradient, borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1.5rem", boxShadow: "0 8px 32px rgba(108, 92, 231, 0.35)", transition: "background 1.5s ease" }}>
+                            <div style={{ width: "64px", height: "64px", background: COLORS.logoGradient, borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "1.5rem", boxShadow: "0 8px 24px rgba(0, 0, 0, 0.15)", transition: "background 1.5s ease" }}>
                                 <Smartphone size={32} color="white" />
                             </div>
                             <h1 style={{ fontSize: "1.75rem", fontWeight: 700, margin: "0 0 0.5rem", textAlign: "center", color: COLORS.titleText }}>MobileAssist AI</h1>
@@ -338,20 +345,20 @@ export default function Chat() {
                                 {SUGGESTIONS.map((s, i) => (
                                     <button key={i} onClick={() => { setInput(s.text); inputRef.current?.focus(); }}
                                         style={{
-                                            background: withAlpha(s.color, 0.1),
-                                            border: `1.5px solid ${withAlpha(s.color, 0.35)}`,
+                                            background: withAlpha(s.color, 0.55),
+                                            border: `1.5px solid ${withAlpha(s.color, 0.75)}`,
                                             borderRadius: "12px",
                                             padding: "1rem",
                                             cursor: "pointer",
                                             textAlign: "left",
-                                            color: COLORS.bodyText,
+                                            color: COLORS.titleText,
                                             transition: "background 0.2s"
                                         }}
-                                        onMouseEnter={e => e.currentTarget.style.background = withAlpha(s.color, 0.18)}
-                                        onMouseLeave={e => e.currentTarget.style.background = withAlpha(s.color, 0.1)}
+                                        onMouseEnter={e => e.currentTarget.style.background = withAlpha(s.color, 0.7)}
+                                        onMouseLeave={e => e.currentTarget.style.background = withAlpha(s.color, 0.55)}
                                     >
-                                        <div style={{ color: s.color, marginBottom: "0.5rem" }}>{s.icon}</div>
-                                        <div style={{ fontSize: "0.8rem", color: COLORS.bodyText, lineHeight: 1.4 }}>{s.text}</div>
+                                        <div style={{ color: COLORS.titleText, marginBottom: "0.5rem" }}>{s.icon}</div>
+                                        <div style={{ fontSize: "0.8rem", fontWeight: 600, color: COLORS.titleText, lineHeight: 1.4 }}>{s.text}</div>
                                     </button>
                                 ))}
                             </div>
@@ -396,7 +403,7 @@ export default function Chat() {
                                 <Mic size={20} />
                             </button>
                             <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading}
-                                style={{ width: "36px", height: "36px", background: (input.trim() || selectedImage) ? COLORS.accent : "rgba(0,0,0,0.1)", border: "none", borderRadius: "10px", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "background 0.2s" }}>
+                                style={{ width: "36px", height: "36px", background: (input.trim() || selectedImage) ? COLORS.accent : "rgba(0,0,0,0.08)", border: "none", borderRadius: "10px", color: (input.trim() || selectedImage) ? "#fff" : COLORS.iconMuted, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, transition: "background 0.2s" }}>
                                 <Send size={16} />
                             </button>
                         </div>
@@ -409,7 +416,7 @@ export default function Chat() {
             <style>{`
                 @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-8px); } }
                 ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
-                input::placeholder { color: rgba(44, 44, 44, 0.45); }
+                input::placeholder { color: ${COLORS.placeholder}; }
             `}</style>
         </div>
     );
