@@ -1,6 +1,7 @@
 import React from 'react';
 import { Bot, User, Star } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function ChatMessage({ msg, saveFavorite }) {
     const saveAIResponse = () => {
@@ -35,6 +36,7 @@ export default function ChatMessage({ msg, saveFavorite }) {
                 {msg.content && (
                     <div style={{ lineHeight: 1.6 }}>
                         <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
                             components={{
                                 p: ({ children }) => <p style={{ margin: "0.4rem 0" }}>{children}</p>,
                                 strong: ({ children }) => <strong style={{ color: "#a5b4fc", fontWeight: 700 }}>{children}</strong>,
@@ -46,6 +48,28 @@ export default function ChatMessage({ msg, saveFavorite }) {
                                 h3: ({ children }) => <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#a5b4fc", margin: "0.4rem 0" }}>{children}</h3>,
                                 code: ({ children }) => <code style={{ background: "rgba(0,0,0,0.3)", padding: "0.1rem 0.4rem", borderRadius: "4px", fontSize: "0.9em" }}>{children}</code>,
                                 hr: () => <hr style={{ border: "none", borderTop: "1px solid rgba(0,0,0,0.1)", margin: "0.5rem 0" }} />,
+                                table: ({ children }) => (
+                                    <div style={{ overflowX: "auto", margin: "0.75rem 0" }}>
+                                        <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.85rem" }}>
+                                            {children}
+                                        </table>
+                                    </div>
+                                ),
+                                thead: ({ children }) => (
+                                    <thead style={{ background: "rgba(165,180,252,0.15)" }}>{children}</thead>
+                                ),
+                                tbody: ({ children }) => <tbody>{children}</tbody>,
+                                tr: ({ children }) => (
+                                    <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>{children}</tr>
+                                ),
+                                th: ({ children }) => (
+                                    <th style={{ textAlign: "left", padding: "0.5rem 0.75rem", color: "#a5b4fc", fontWeight: 700, whiteSpace: "nowrap" }}>
+                                        {children}
+                                    </th>
+                                ),
+                                td: ({ children }) => (
+                                    <td style={{ padding: "0.5rem 0.75rem", verticalAlign: "top" }}>{children}</td>
+                                ),
                             }}
                         >
                             {msg.content}
@@ -98,6 +122,3 @@ export default function ChatMessage({ msg, saveFavorite }) {
         </div>
     );
 }
-
-
-

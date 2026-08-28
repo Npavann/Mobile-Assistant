@@ -3,6 +3,18 @@ const router = express.Router();
 const Mobile = require('../models/Mobile');
 const Groq = require('groq-sdk');
 
+// Safety net: even with prompt instructions, LLMs sometimes still slip in
+// markdown symbols. Strip them here so the reply is always guaranteed plain.
+function stripMarkdown(text) {
+  if (!text) return text;
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')   // **bold** -> bold
+    .replace(/\*(.*?)\*/g, '$1')       // *italic* -> italic
+    .replace(/^#{1,6}\s*/gm, '')       // ## Heading -> Heading
+    .replace(/`([^`]*)`/g, '$1')       // `code` -> code
+    .replace(/~~(.*?)~~/g, '$1');      // ~~strike~~ -> strike
+}
+
 router.post('/', async (req, res) => {
 try {
 const { message, image } = req.body;
@@ -52,7 +64,7 @@ Respond naturally in a chat-like format in English.`;
       reasoning_effort: "none"
     });
 
-    const reply = response.choices[0]?.message?.content || "No response generated.";
+    const reply = stripMarkdown(response.choices[0]?.message?.content || "No response generated.");
     return res.json({ type: "ai_vision", reply });
 
   } catch (aiError) {
@@ -84,20 +96,20 @@ if (phones.length > 0) {
   ];
   if (uniquePhones.length >= 2) {
   const comparisonText = uniquePhones.map(phone => `
-**${phone.model_name}**
-- 💰 Price: ₹${phone.price}
-- ⚙️ Processor: ${phone.processor}
-- 📦 RAM/Storage: ${phone.ram_internal_memory}
-- 🔋 Battery: ${phone.battery}
-- 🖥️ Display: ${phone.display}
-- 📷 Rear Camera: ${phone.rear_cameras}
-- 🤳 Front Camera: ${phone.front_cameras}
-- ✨ Features: ${phone.additional_features}
+${phone.model_name}
+- Price: ₹${phone.price}
+- Processor: ${phone.processor}
+- RAM/Storage: ${phone.ram_internal_memory}
+- Battery: ${phone.battery}
+- Display: ${phone.display}
+- Rear Camera: ${phone.rear_cameras}
+- Front Camera: ${phone.front_cameras}
+- Features: ${phone.additional_features}
 `).join("\n---\n");
   return res.json({
   type: "comparison",
   phones: uniquePhones,
-  reply: `## ⚖️ Phone Comparison\n${comparisonText}`
+  reply: `Phone Comparison\n${comparisonText}`
   });
   }
 
@@ -108,16 +120,16 @@ if (phones.length > 0) {
   lowerMessage.includes(p.model_name.toLowerCase())
   );
   if (phone) {
-  const phoneText = `**${phone.model_name}**
+  const phoneText = `${phone.model_name}
 
-- 💰 **Price:** ₹${phone.price}
-- ⚙️ **Processor:** ${phone.processor}
-- 📦 **RAM/Storage:** ${phone.ram_internal_memory}
-- 🔋 **Battery:** ${phone.battery}
-- 🖥️ **Display:** ${phone.display}
-- 📷 **Rear Camera:** ${phone.rear_cameras}
-- 🤳 **Front Camera:** ${phone.front_cameras}
-- ✨ **Features:** ${phone.additional_features}`;
+- Price: ₹${phone.price}
+- Processor: ${phone.processor}
+- RAM/Storage: ${phone.ram_internal_memory}
+- Battery: ${phone.battery}
+- Display: ${phone.display}
+- Rear Camera: ${phone.rear_cameras}
+- Front Camera: ${phone.front_cameras}
+- Features: ${phone.additional_features}`;
   return res.json({
   type: "phone",
   phone: phone,
@@ -146,14 +158,14 @@ if (phones.length > 0) {
 
     if (matchingPhones.length > 0) {
       const listText = matchingPhones.map((p, i) => `
-**${i + 1}. ${p.model_name}** — ₹${p.price}
+${i + 1}. ${p.model_name} — ₹${p.price}
    - ${p.processor} | ${p.ram_internal_memory} | ${p.battery}
 `).join("\n");
 
       return res.json({
         type: "comparison",
         phones: matchingPhones,
-        reply: `## 📱 Best Phones Under ₹${budget.toLocaleString('en-IN')}\n${listText}\n\n*Want full specs of any phone? Just ask its name!*`
+        reply: `Best Phones Under ₹${budget.toLocaleString('en-IN')}\n${listText}\n\nWant full specs of any phone? Just ask its name!`
       });
     }
   }
@@ -180,7 +192,7 @@ Rules:
 - Reply in English by default, unless user writes in Hindi, Kannada, Telugu, or another language
 - Never mix languages in one response
 - Always use Indian Rupees (INR ₹), never USD
-- Format with markdown: **bold** phone names, bullet points for specs
+- Do NOT use markdown symbols like **, ##, or backticks. Write in plain, natural sentences and simple numbered lists only — no asterisks, no bold markers, no headers
 - Give specific model names and at least 3 options when recommending
 - Never say "I don't have real-time data" — give your best estimate`
     },
@@ -189,11 +201,11 @@ Rules:
       content: message
     }
   ],
-  max_tokens: 700,
+  max_tokens: 1800,
   temperature: 0.4
 });
 
-const reply = response.choices[0]?.message?.content || "No response generated.";
+const reply = stripMarkdown(response.choices[0]?.message?.content || "No response generated.");
 return res.json({ type: "ai", reply });
 
 } catch (aiError) {

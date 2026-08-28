@@ -227,7 +227,18 @@ export default function Chat() {
     }, [messages, isLoading]);
 
     const speak = (text) => {
-        const speech = new SpeechSynthesisUtterance(text);
+        // Clean up symbols the browser's speech engine would otherwise read aloud
+        // literally (e.g. "-" as "minus", "*" as "asterisk", "#" as "hash").
+        const cleanText = text
+            .replace(/\*\*(.*?)\*\*/g, '$1')
+            .replace(/\*(.*?)\*/g, '$1')
+            .replace(/^#{1,6}\s*/gm, '')
+            .replace(/`([^`]*)`/g, '$1')
+            .replace(/~~(.*?)~~/g, '$1')
+            .replace(/^\s*[-•]\s+/gm, '')
+            .replace(/\s+-\s+/g, ', ')
+            .replace(/[_#]/g, '');
+        const speech = new SpeechSynthesisUtterance(cleanText);
         speech.lang = "en-US";
         window.speechSynthesis.speak(speech);
     };
